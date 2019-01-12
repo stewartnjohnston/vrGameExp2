@@ -13,4 +13,11 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true" />
 
+    <com.google.vr.sdk.samples.treasurehunt.VrOverlayView
+        android:id="@+id/overlay"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true" />
+
 </RelativeLayout>

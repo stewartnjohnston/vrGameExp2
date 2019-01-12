@@ -31,7 +31,7 @@
                 android:name=".TreasureHuntActivity"
                 android:label="@string/app_name"
                 android:screenOrientation="landscape"
-                android:configChanges="orientation|keyboardHidden|screenSize"
+                android:configChanges="orientation|keyboardHidden|screenSize|keyboard"
                 android:enableVrMode="@string/gvr_vr_mode_component"
                 android:resizeableActivity="false">
             <!-- The VR icon to be used in Daydream Home comes in two parts:

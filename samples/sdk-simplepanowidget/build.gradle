@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc. All rights reserved.
+ * Copyright 2017 Google Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-apply plugin: 'com.android.model.application'
+apply plugin: 'com.android.application'
 
-model {
-    android {
-        compileSdkVersion 24
-        buildToolsVersion "24.0.0"
+android {
+    compileSdkVersion 26
 
-        defaultConfig {
-            minSdkVersion.apiLevel 19
-            targetSdkVersion.apiLevel 22
-            versionCode 1
-            versionName "1.0"
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 22
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles.add(file('../../proguard-gvr.txt'))
         }
 
-        buildTypes {
-            release {
-                minifyEnabled true
-                proguardFiles.add(file('../../proguard-gvr.txt'))
-            }
-        }
     }
 }
 
 dependencies {
-    compile 'com.google.vr:sdk-panowidget:1.10.0'
+    implementation 'com.google.vr:sdk-panowidget:1.180.0'
 }

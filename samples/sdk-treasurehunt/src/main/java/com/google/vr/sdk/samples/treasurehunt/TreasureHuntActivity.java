@@ -16,12 +16,17 @@
 
 package com.google.vr.sdk.samples.treasurehunt;
 
-import android.content.Context;
+
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.os.Bundle;
-import android.os.Vibrator;
+//-------------------------------------------------------------------------
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.InputDevice;
+//-------------------------------------------------------------------------
+
 import com.google.vr.sdk.audio.GvrAudioEngine;
 import com.google.vr.sdk.base.AndroidCompat;
 import com.google.vr.sdk.base.Eye;
@@ -29,148 +34,211 @@ import com.google.vr.sdk.base.GvrActivity;
 import com.google.vr.sdk.base.GvrView;
 import com.google.vr.sdk.base.HeadTransform;
 import com.google.vr.sdk.base.Viewport;
-import java.io.BufferedReader;
+
+import net.pogo.game.engine.DisplayComponent;
+import net.pogo.game.engine.Engine;
+import net.pogo.game.engine.Entity;
+import net.pogo.game.engine.PositionComponent;
+import net.pogo.game.engine.VelocityComponent;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.Random;
 import javax.microedition.khronos.egl.EGLConfig;
 
 /**
  * A Google VR sample application.
  *
- * <p>The TreasureHunt scene consists of a planar ground grid and a floating
- * "treasure" cube. When the user looks at the cube, the cube will turn gold.
- * While gold, the user can activate the Cardboard trigger, either directly
- * using the touch trigger on their Cardboard viewer, or using the Daydream
- * controller-based trigger emulation. Activating the trigger will in turn
- * randomly reposition the cube.
+ * <p>This app presents a scene consisting of a room and a floating object. When the user finds the
+ * object, they can invoke the trigger action, and a new object will be randomly spawned. When in
+ * Cardboard mode, the user must gaze at the object and use the Cardboard trigger button. When in
+ * Daydream mode, the user can use the controller to position the cursor, and use the controller
+ * buttons to invoke the trigger action.
  */
 public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoRenderer {
 
-  protected float[] modelCube;
-  protected float[] modelPosition;
+  //-------------------------------------------------------------------------
+  static Engine engine;
+  float EulerXvelocity = 0;
+  float EulerYvelocity = 0;
+  float EulerX = 0;
+  float EulerY = 0;
+  private static float velocitySpaceship = 0.0f;
+  private static float xPosition = 1.0f;
+  private static float yPosition = 0.0f;
+  private static float zPosition = 1.0f;
 
-  private static final String TAG = "TreasureHuntActivity";
+  float headEuler[] = new float[3];
+  float[] cameraTranslat = new float[16];
+  float[] cameraRotate = new float[16];
+  float[] copym = new float[16];
+  float[] rotateTmp = new float[16];
 
-  private static final float Z_NEAR = 0.1f;
-  private static final float Z_FAR = 100.0f;
+  private  static float[] forwardVector = new float[3];
+  private static  float[] headViewx = new float[16];
+  private static  float[][] actors = new float[9][3];
+
+  private static final float inputVelocityVector[] = new float[] {0.0f,0.0f,-1.0f,0.0f};
+  private static float outputVelocityVector[] = new float[4];
 
   private static final float CAMERA_Z = 0.01f;
-  private static final float TIME_DELTA = 0.3f;
 
-  private static final float YAW_LIMIT = 0.12f;
-  private static final float PITCH_LIMIT = 0.12f;
-
-  private static final int COORDS_PER_VERTEX = 3;
+  private static float velocityX = 0.0f;
+  private static float velocityY = 0.0f;
+  private static float velocityZ = 0.0f;
 
   // We keep the light always position just above the user.
   private static final float[] LIGHT_POS_IN_WORLD_SPACE = new float[] {0.0f, 2.0f, 0.0f, 1.0f};
+  private static final float[] LIGHT_POS_IN_WORLD_SPACE_ORIGINAL = new float[] {0.0f, 2.0f, 0.0f, 1.0f};
+  //-------------------------------------------------------------------------
+
+
+
+  private static final String TAG = "HelloVrActivity";
+
+  private static final int TARGET_MESH_COUNT = 3;
+
+  private static final float Z_NEAR = 0.01f;
+  private static final float Z_FAR = 10.0f;
 
   // Convenience vector for extracting the position from a matrix via multiplication.
-  private static final float[] POS_MATRIX_MULTIPLY_VEC = {0, 0, 0, 1.0f};
+  private static final float[] POS_MATRIX_MULTIPLY_VEC = {0.0f, 0.0f, 0.0f, 1.0f};
+  private static final float[] FORWARD_VEC = {0.0f, 0.0f, -1.0f, 1.f};
 
-  private static final float MIN_MODEL_DISTANCE = 3.0f;
-  private static final float MAX_MODEL_DISTANCE = 7.0f;
+  private static final float MIN_TARGET_DISTANCE = 3.0f;
+  private static final float MAX_TARGET_DISTANCE = 3.5f;
 
-  private static final String OBJECT_SOUND_FILE = "cube_sound.wav";
-  private static final String SUCCESS_SOUND_FILE = "success.wav";
+  private static final String OBJECT_SOUND_FILE = "audio/HelloVR_Loop.ogg";
+  private static final String SUCCESS_SOUND_FILE = "audio/HelloVR_Activation.ogg";
 
-  private final float[] lightPosInEyeSpace = new float[4];
+  private static final float FLOOR_HEIGHT = -2.0f;
 
-  private FloatBuffer floorVertices;
-  private FloatBuffer floorColors;
-  private FloatBuffer floorNormals;
+  private static final float ANGLE_LIMIT = 0.2f;
 
-  private FloatBuffer cubeVertices;
-  private FloatBuffer cubeColors;
-  private FloatBuffer cubeFoundColors;
-  private FloatBuffer cubeNormals;
+  // The maximum yaw and pitch of the target object, in degrees. After hiding the target, its
+  // yaw will be within [-MAX_YAW, MAX_YAW] and pitch will be within [-MAX_PITCH, MAX_PITCH].
+  private static final float MAX_YAW = 100.0f;
+  private static final float MAX_PITCH = 25.0f;
 
-  private int cubeProgram;
-  private int floorProgram;
+  private static final String[] OBJECT_VERTEX_SHADER_CODE =
+      new String[] {
+        "uniform mat4 u_MVP;",
+        "attribute vec4 a_Position;",
+        "attribute vec2 a_UV;",
+        "varying vec2 v_UV;",
+        "",
+        "void main() {",
+        "  v_UV = a_UV;",
+        "  gl_Position = u_MVP * a_Position;",
+        "}",
+      };
+  private static final String[] OBJECT_FRAGMENT_SHADER_CODE =
+      new String[] {
+        "precision mediump float;",
+        "varying vec2 v_UV;",
+        "uniform sampler2D u_Texture;",
+        "",
+        "void main() {",
+        "  // The y coordinate of this sample's textures is reversed compared to",
+        "  // what OpenGL expects, so we invert the y coordinate.",
+        "  gl_FragColor = texture2D(u_Texture, vec2(v_UV.x, 1.0 - v_UV.y));",
+        "}",
+      };
 
-  private int cubePositionParam;
-  private int cubeNormalParam;
-  private int cubeColorParam;
-  private int cubeModelParam;
-  private int cubeModelViewParam;
-  private int cubeModelViewProjectionParam;
-  private int cubeLightPosParam;
+  private int objectProgram;
 
-  private int floorPositionParam;
-  private int floorNormalParam;
-  private int floorColorParam;
-  private int floorModelParam;
-  private int floorModelViewParam;
-  private int floorModelViewProjectionParam;
-  private int floorLightPosParam;
+  private int objectPositionParam;
+  private int objectUvParam;
+  private int objectModelViewProjectionParam;
 
+  private float targetDistance = MAX_TARGET_DISTANCE;
+
+  private TexturedMesh room;
+  private Texture roomTex;
+  private ArrayList<TexturedMesh> targetObjectMeshes;
+  private ArrayList<Texture> targetObjectNotSelectedTextures;
+  private ArrayList<Texture> targetObjectSelectedTextures;
+  private ArrayList<Texture> sterioTextures;
+  private int curTargetObject;
+
+  private Random random;
+
+  private float[] targetPosition;
   private float[] camera;
   private float[] view;
   private float[] headView;
   private float[] modelViewProjection;
   private float[] modelView;
-  private float[] modelFloor;
+
+  private float[] modelTarget;
+  private float[] modelRoom;
 
   private float[] tempPosition;
   private float[] headRotation;
-
-  private float objectDistance = MAX_MODEL_DISTANCE / 2.0f;
-  private float floorDepth = 20f;
-
-  private Vibrator vibrator;
 
   private GvrAudioEngine gvrAudioEngine;
   private volatile int sourceId = GvrAudioEngine.INVALID_ID;
   private volatile int successSourceId = GvrAudioEngine.INVALID_ID;
 
-  /**
-   * Converts a raw text file, saved as a resource, into an OpenGL ES shader.
-   *
-   * @param type The type of shader we will be creating.
-   * @param resId The resource ID of the raw text file about to be turned into a shader.
-   * @return The shader object handler.
-   */
-  private int loadGLShader(int type, int resId) {
-    String code = readRawTextFile(resId);
-    int shader = GLES20.glCreateShader(type);
-    GLES20.glShaderSource(shader, code);
-    GLES20.glCompileShader(shader);
+    public void createSpaceship(int _objectPositionParam, int _objectUvParam, float x, float y, float z,float vx, float vy, float vz) throws IOException
+    {
+        Entity spaceship = new Entity();
 
-    // Get the compilation status.
-    final int[] compileStatus = new int[1];
-    GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compileStatus, 0);
+        PositionComponent position = new PositionComponent();
+        position.position.SetUnity();
 
-    // If the compilation failed, delete the shader.
-    if (compileStatus[0] == 0) {
-      Log.e(TAG, "Error compiling shader: " + GLES20.glGetShaderInfoLog(shader));
-      GLES20.glDeleteShader(shader);
-      shader = 0;
+        position.position.Translate(0.0f, 0.0f, targetDistance);
+        position.position.Translate(x,y,z);
+
+        spaceship.add( position );
+
+        DisplayComponent displayComponent = new DisplayComponent();
+
+        displayComponent.textureMesh = new String("cube.obj");
+        if(!engine.GetTexturedMeshContainer().containsKey("cube.obj"))
+        {
+            TexturedMesh texturedMesh =  new TexturedMesh(this, "cube.obj", _objectPositionParam, _objectUvParam);
+            displayComponent.textureMeshObject = texturedMesh;
+            engine.GetTexturedMeshContainer().loadWaveFrontObject("cube.obj", texturedMesh);
+        }
+        else
+        {
+            displayComponent.textureMeshObject = engine.GetTexturedMeshContainer().getTexturedMesh("cube.obj");
+        }
+
+        if(!engine.GetTextureContainer().containsKey("bumpy_bricks_public_domain_l.png")) {
+          Texture texture = new Texture(this, "bumpy_bricks_public_domain_l.png");
+          displayComponent.textureObject = texture;
+          engine.GetTextureContainer().loadTexture("bumpy_bricks_public_domain_l.png", texture);
+        }
+        else
+        {
+          displayComponent.textureObject = engine.GetTextureContainer().getTexture("bumpy_bricks_public_domain_l.png");
+        }
+
+        if(!engine.GetTextureContainer().containsKey("bumpy_bricks_public_domain_r.png")) {
+          Texture texture = new Texture(this, "bumpy_bricks_public_domain_r.png");
+          engine.GetTextureContainer().loadTexture("bumpy_bricks_public_domain_r.png", texture);
+        }
+        else
+        {
+          displayComponent.textureObject = engine.GetTextureContainer().getTexture("bumpy_bricks_public_domain_r.png");
+        }
+
+        displayComponent.texture = new String("bumpy_bricks_public_domain_r.png");
+
+        spaceship.add( displayComponent );
+
+
+
+        VelocityComponent velocity = new VelocityComponent();
+        velocity.velocity.data[0]=vx;
+        velocity.velocity.data[1]=vy;
+        velocity.velocity.data[2]=vz;
+        spaceship.add( velocity );
+
+        engine.addEntity( spaceship );
     }
-
-    if (shader == 0) {
-      throw new RuntimeException("Error creating shader.");
-    }
-
-    return shader;
-  }
-
-  /**
-   * Checks if we've had an error inside of OpenGL ES, and if so what that error is.
-   *
-   * @param label Label to report in case of error.
-   */
-  private static void checkGLError(String label) {
-    int error;
-    while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
-      Log.e(TAG, label + ": glError " + error);
-      throw new RuntimeException(label + ": glError " + error);
-    }
-  }
-
   /**
    * Sets the view to our GvrView and initializes the transformation matrices we will use
    * to render our scene.
@@ -180,22 +248,25 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     super.onCreate(savedInstanceState);
 
     initializeGvrView();
+      engine = new Engine();
 
-    modelCube = new float[16];
+
     camera = new float[16];
     view = new float[16];
     modelViewProjection = new float[16];
     modelView = new float[16];
-    modelFloor = new float[16];
+    // Target object first appears directly in front of user.
+    targetPosition = new float[] {0.0f, 0.0f, -MIN_TARGET_DISTANCE};
     tempPosition = new float[4];
-    // Model first appears directly in front of user.
-    modelPosition = new float[] {0.0f, 0.0f, -MAX_MODEL_DISTANCE / 2.0f};
     headRotation = new float[4];
+    modelTarget = new float[16];
+    modelRoom = new float[16];
     headView = new float[16];
-    vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
     // Initialize 3D audio engine.
     gvrAudioEngine = new GvrAudioEngine(this, GvrAudioEngine.RenderingMode.BINAURAL_HIGH_QUALITY);
+
+    random = new Random();
   }
 
   public void initializeGvrView() {
@@ -254,96 +325,24 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
   @Override
   public void onSurfaceCreated(EGLConfig config) {
     Log.i(TAG, "onSurfaceCreated");
-    GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f); // Dark background so text shows up well.
+    GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    ByteBuffer bbVertices = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_COORDS.length * 4);
-    bbVertices.order(ByteOrder.nativeOrder());
-    cubeVertices = bbVertices.asFloatBuffer();
-    cubeVertices.put(WorldLayoutData.CUBE_COORDS);
-    cubeVertices.position(0);
+    objectProgram = Util.compileProgram(OBJECT_VERTEX_SHADER_CODE, OBJECT_FRAGMENT_SHADER_CODE);
 
-    ByteBuffer bbColors = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_COLORS.length * 4);
-    bbColors.order(ByteOrder.nativeOrder());
-    cubeColors = bbColors.asFloatBuffer();
-    cubeColors.put(WorldLayoutData.CUBE_COLORS);
-    cubeColors.position(0);
+    objectPositionParam = GLES20.glGetAttribLocation(objectProgram, "a_Position");
+    objectUvParam = GLES20.glGetAttribLocation(objectProgram, "a_UV");
+    objectModelViewProjectionParam = GLES20.glGetUniformLocation(objectProgram, "u_MVP");
 
-    ByteBuffer bbFoundColors =
-        ByteBuffer.allocateDirect(WorldLayoutData.CUBE_FOUND_COLORS.length * 4);
-    bbFoundColors.order(ByteOrder.nativeOrder());
-    cubeFoundColors = bbFoundColors.asFloatBuffer();
-    cubeFoundColors.put(WorldLayoutData.CUBE_FOUND_COLORS);
-    cubeFoundColors.position(0);
+    Util.checkGlError("Object program params");
 
-    ByteBuffer bbNormals = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_NORMALS.length * 4);
-    bbNormals.order(ByteOrder.nativeOrder());
-    cubeNormals = bbNormals.asFloatBuffer();
-    cubeNormals.put(WorldLayoutData.CUBE_NORMALS);
-    cubeNormals.position(0);
 
-    // make a floor
-    ByteBuffer bbFloorVertices = ByteBuffer.allocateDirect(WorldLayoutData.FLOOR_COORDS.length * 4);
-    bbFloorVertices.order(ByteOrder.nativeOrder());
-    floorVertices = bbFloorVertices.asFloatBuffer();
-    floorVertices.put(WorldLayoutData.FLOOR_COORDS);
-    floorVertices.position(0);
+    AndroidVRGraphicsDispay display = new AndroidVRGraphicsDispay();
+    display.objectModelViewProjectionParam = objectModelViewProjectionParam;
+    display.objectProgram = objectProgram;
+    engine.GetrenderSystem().display = display;
 
-    ByteBuffer bbFloorNormals = ByteBuffer.allocateDirect(WorldLayoutData.FLOOR_NORMALS.length * 4);
-    bbFloorNormals.order(ByteOrder.nativeOrder());
-    floorNormals = bbFloorNormals.asFloatBuffer();
-    floorNormals.put(WorldLayoutData.FLOOR_NORMALS);
-    floorNormals.position(0);
-
-    ByteBuffer bbFloorColors = ByteBuffer.allocateDirect(WorldLayoutData.FLOOR_COLORS.length * 4);
-    bbFloorColors.order(ByteOrder.nativeOrder());
-    floorColors = bbFloorColors.asFloatBuffer();
-    floorColors.put(WorldLayoutData.FLOOR_COLORS);
-    floorColors.position(0);
-
-    int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.light_vertex);
-    int gridShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.grid_fragment);
-    int passthroughShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.passthrough_fragment);
-
-    cubeProgram = GLES20.glCreateProgram();
-    GLES20.glAttachShader(cubeProgram, vertexShader);
-    GLES20.glAttachShader(cubeProgram, passthroughShader);
-    GLES20.glLinkProgram(cubeProgram);
-    GLES20.glUseProgram(cubeProgram);
-
-    checkGLError("Cube program");
-
-    cubePositionParam = GLES20.glGetAttribLocation(cubeProgram, "a_Position");
-    cubeNormalParam = GLES20.glGetAttribLocation(cubeProgram, "a_Normal");
-    cubeColorParam = GLES20.glGetAttribLocation(cubeProgram, "a_Color");
-
-    cubeModelParam = GLES20.glGetUniformLocation(cubeProgram, "u_Model");
-    cubeModelViewParam = GLES20.glGetUniformLocation(cubeProgram, "u_MVMatrix");
-    cubeModelViewProjectionParam = GLES20.glGetUniformLocation(cubeProgram, "u_MVP");
-    cubeLightPosParam = GLES20.glGetUniformLocation(cubeProgram, "u_LightPos");
-
-    checkGLError("Cube program params");
-
-    floorProgram = GLES20.glCreateProgram();
-    GLES20.glAttachShader(floorProgram, vertexShader);
-    GLES20.glAttachShader(floorProgram, gridShader);
-    GLES20.glLinkProgram(floorProgram);
-    GLES20.glUseProgram(floorProgram);
-
-    checkGLError("Floor program");
-
-    floorModelParam = GLES20.glGetUniformLocation(floorProgram, "u_Model");
-    floorModelViewParam = GLES20.glGetUniformLocation(floorProgram, "u_MVMatrix");
-    floorModelViewProjectionParam = GLES20.glGetUniformLocation(floorProgram, "u_MVP");
-    floorLightPosParam = GLES20.glGetUniformLocation(floorProgram, "u_LightPos");
-
-    floorPositionParam = GLES20.glGetAttribLocation(floorProgram, "a_Position");
-    floorNormalParam = GLES20.glGetAttribLocation(floorProgram, "a_Normal");
-    floorColorParam = GLES20.glGetAttribLocation(floorProgram, "a_Color");
-
-    checkGLError("Floor program params");
-
-    Matrix.setIdentityM(modelFloor, 0);
-    Matrix.translateM(modelFloor, 0, 0, -floorDepth, 0); // Floor appears below user.
+    Matrix.setIdentityM(modelRoom, 0);
+    Matrix.translateM(modelRoom, 0, 0, FLOOR_HEIGHT, 0);
 
     // Avoid any delays during start-up due to decoding of sound files.
     new Thread(
@@ -352,60 +351,248 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
               public void run() {
                 // Start spatial audio playback of OBJECT_SOUND_FILE at the model position. The
                 // returned sourceId handle is stored and allows for repositioning the sound object
-                // whenever the cube position changes.
+                // whenever the target position changes.
                 gvrAudioEngine.preloadSoundFile(OBJECT_SOUND_FILE);
                 sourceId = gvrAudioEngine.createSoundObject(OBJECT_SOUND_FILE);
                 gvrAudioEngine.setSoundObjectPosition(
-                    sourceId, modelPosition[0], modelPosition[1], modelPosition[2]);
+                    sourceId, targetPosition[0], targetPosition[1], targetPosition[2]);
                 gvrAudioEngine.playSound(sourceId, true /* looped playback */);
-                // Preload an unspatialized sound to be played on a successful trigger on the cube.
+                // Preload an unspatialized sound to be played on a successful trigger on the
+                // target.
                 gvrAudioEngine.preloadSoundFile(SUCCESS_SOUND_FILE);
               }
             })
         .start();
 
-    updateModelPosition();
+    updateTargetPosition();
 
-    checkGLError("onSurfaceCreated");
+    Util.checkGlError("onSurfaceCreated");
+
+    try {
+
+      createSpaceship(objectPositionParam, objectUvParam, 0, 0, targetDistance, 0, 0, 0);
+      createSpaceship(objectPositionParam, objectUvParam, 0, 0, 2.5f, 0, 0, 0);
+      createSpaceship(objectPositionParam, objectUvParam, 2.0f, 2.0f, 2.5f, 0, 0, 0.01f);
+      createSpaceship(objectPositionParam, objectUvParam, 1.0f, 1.0f, 2.5f, 0, 0.01f, 0);
+      createSpaceship(objectPositionParam, objectUvParam, 3.0f, 0.0f, 2.5f, 0.01f, 0, 0);
+
+
+      room = new TexturedMesh(this, "CubeRoom.obj", objectPositionParam, objectUvParam);
+      roomTex = new Texture(this, "CubeRoom_BakedDiffuse.png");
+      targetObjectMeshes = new ArrayList<>();
+      targetObjectNotSelectedTextures = new ArrayList<>();
+      targetObjectSelectedTextures = new ArrayList<>();
+      sterioTextures = new ArrayList<>();
+
+      sterioTextures.add(new Texture(this, "bumpy_bricks_public_domain_l.png"));
+      sterioTextures.add(new Texture(this, "bumpy_bricks_public_domain_r.png"));
+
+
+      targetObjectMeshes.add(new TexturedMesh(this, "cube.obj", objectPositionParam, objectUvParam));
+      targetObjectMeshes.add(new TexturedMesh(this, "cube.obj", objectPositionParam, objectUvParam));
+      targetObjectMeshes.add(new TexturedMesh(this, "cube.obj", objectPositionParam, objectUvParam));
+
+
+
+      targetObjectMeshes.add(new TexturedMesh(this, "Icosahedron.obj", objectPositionParam, objectUvParam));
+      //targetObjectMeshes.add(new TexturedMesh(this, "BaseMeshsculpt2.obj", objectPositionParam, objectUvParam));
+
+      targetObjectNotSelectedTextures.add(new Texture(this, "Icosahedron_Blue_BakedDiffuse.png"));
+      targetObjectSelectedTextures.add(new Texture(this, "Icosahedron_Pink_BakedDiffuse.png"));
+
+      targetObjectMeshes.add(new TexturedMesh(this, "QuadSphere.obj", objectPositionParam, objectUvParam));
+      //targetObjectMeshes.add(new TexturedMesh(this, "BaseMeshsculpt2.obj", objectPositionParam, objectUvParam));
+
+      targetObjectNotSelectedTextures.add(new Texture(this, "QuadSphere_Blue_BakedDiffuse.png"));
+      targetObjectSelectedTextures.add(new Texture(this, "QuadSphere_Pink_BakedDiffuse.png"));
+
+      //targetObjectMeshes.add(new TexturedMesh(this, "TriSphere.obj", objectPositionParam, objectUvParam));
+      targetObjectMeshes.add(new TexturedMesh(this, "BaseMeshsculpt2.obj", objectPositionParam, objectUvParam));
+
+      targetObjectNotSelectedTextures.add(new Texture(this, "TriSphere_Blue_BakedDiffuse.png"));
+      targetObjectSelectedTextures.add(new Texture(this, "TriSphere_Pink_BakedDiffuse.png"));
+    } catch (IOException e) {
+      Log.e(TAG, "Unable to initialize objects", e);
+    }
+    curTargetObject = random.nextInt(TARGET_MESH_COUNT);
   }
 
-  /**
-   * Updates the cube model position.
-   */
-  protected void updateModelPosition() {
-    Matrix.setIdentityM(modelCube, 0);
-    Matrix.translateM(modelCube, 0, modelPosition[0], modelPosition[1], modelPosition[2]);
+  /** Updates the target object position. */
+  private void updateTargetPosition() {
+    Matrix.setIdentityM(modelTarget, 0);
+    Matrix.translateM(modelTarget, 0, targetPosition[0], targetPosition[1], targetPosition[2]);
 
-    // Update the sound location to match it with the new cube position.
+    // Update the sound location to match it with the new target position.
     if (sourceId != GvrAudioEngine.INVALID_ID) {
       gvrAudioEngine.setSoundObjectPosition(
-          sourceId, modelPosition[0], modelPosition[1], modelPosition[2]);
+          sourceId, targetPosition[0], targetPosition[1], targetPosition[2]);
     }
-    checkGLError("updateCubePosition");
+    Util.checkGlError("updateTargetPosition");
   }
 
-  /**
-   * Converts a raw text file into a string.
-   *
-   * @param resId The resource ID of the raw text file about to be turned into a shader.
-   * @return The context of the text file, or null in case of error.
-   */
-  private String readRawTextFile(int resId) {
-    InputStream inputStream = getResources().openRawResource(resId);
-    try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-      StringBuilder sb = new StringBuilder();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        sb.append(line).append("\n");
+  //-----------------------------------------------------------------------------------------------
+
+  @Override
+  public boolean dispatchGenericMotionEvent(MotionEvent event) {
+
+
+    // Check that the event came from a joystick or gamepad since a generic
+    // motion event could be almost anything. API level 18 adds the useful
+    // event.isFromSource() helper function.
+    boolean rt = false;
+    int eventSource = event.getSource();
+    if (  ((eventSource & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
+            ((eventSource & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK) )
+    {
+      if (event.getAction() == android.view.MotionEvent.ACTION_MOVE  )
+      {
+        int id = event.getDeviceId();
+        if (-1 != id) {
+
+          float X = event.getX();
+
+          float Y = event.getY();
+
+          if (X == 0 && Y == 1) {
+            // yaw right
+            EulerYvelocity = EulerYvelocity +1;
+            Log.i(TAG, "dispatchGenericMotionEvent()yaw right");
+            rt = true;
+
+          } else if (X == 0 && Y == -1) {
+            // yaw left
+            EulerYvelocity = EulerYvelocity -1;
+            Log.i(TAG, "dispatchGenericMotionEvent()yaw left");
+
+            rt = true;
+          } else if (X == 1 && Y == 0) {
+            // pitch up
+            EulerXvelocity = EulerXvelocity -1;
+            Log.i(TAG, "dispatchGenericMotionEvent()pitch up");
+
+            rt = true;
+          } else if (X == -1 && Y == 0) {
+            // pitch down
+            EulerXvelocity = EulerXvelocity +1;
+            Log.i(TAG, "dispatchGenericMotionEvent()pitch down");
+
+            rt = true;
+          } else if (X == -1 && Y == -1) {
+            // yaw and pich -1
+            EulerXvelocity = EulerXvelocity +1;
+            EulerYvelocity = EulerYvelocity +1;
+            Log.i(TAG, "dispatchGenericMotionEvent()pitch down yaw left");
+
+            rt = true;
+          } else if (X == 1 && Y == 1) {
+            // yaw and pitch +1
+            EulerXvelocity = EulerXvelocity -1;
+            EulerYvelocity = EulerYvelocity -1;
+            Log.i(TAG, "dispatchGenericMotionEvent()pitch up yaw right");
+
+
+            rt = true;
+          } else {
+            rt = true;
+            EulerXvelocity = 0;
+            EulerYvelocity = 0;
+
+          }
+        }
+
       }
-      reader.close();
-      return sb.toString();
-    } catch (IOException e) {
-      e.printStackTrace();
     }
-    return null;
+    else
+    {
+      //overlayView.show3DToast("dispatchGenericMotionEvent()\n2\nsuper.onGenericMotionEvent(event) ");
+      rt = super.onGenericMotionEvent(event);
+    }
+
+    return rt;
   }
+
+  @Override
+  public boolean dispatchKeyEvent (KeyEvent event) {
+    boolean rt = false;
+
+
+//              Joystick buttons
+//
+//           u           D
+//                       |
+//        j          B---+---A
+//           @           |
+//                       C
+
+
+    if ((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD)
+    {
+      if (event.getRepeatCount() == 0)
+      {
+
+        if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_B) {
+          // *****  Buttot "A" on joystick
+          //walk = walk - 5.0f;
+          Log.i(TAG, "dispatchKeyEvent()  Create Wall");
+          rt = true;
+        } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_X) {
+          // *****  Buttot "B" on joystick
+//          Log.i(TAG, "dispatchKeyEvent()B-B Nothing");
+          //R0 = R0 +5;
+          //updateModelPosition(walk, R0, R1, R2);
+          //Log.i(TAG, "dispatchKeyEvent()R0");
+          rt = true;
+        } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_Y) {
+          // *****  Button "D" on joystick
+          velocitySpaceship++;
+          Log.i(TAG, "dispatchKeyEvent()  B-D Faster");
+          //R1 = R1 + 5;
+          //updateModelPosition(walk, R0, R1, R2);
+          //Log.i(TAG, "dispatchKeyEvent()R1");
+          rt = true;
+        } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_A) {
+          // *****  Button "C" on joystick
+          velocitySpaceship = 0;
+          Log.i(TAG, "dispatchKeyEvent()  B-C Stop");
+          //R2 = R2 + 5;
+          //updateModelPosition(walk, R0, R1, R2);
+          //Log.i(TAG, "dispatchKeyEvent()R2");
+
+          rt = true;
+        } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_R1) {
+          // *****  Top Button on joystick
+          Log.i(TAG, "dispatchKeyEvent()  B-Top Nothing");
+          rt = true;
+        } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_L1) {
+          // *****  Bottom Button on joystick
+          // Go back to the starting position and set velocity to zero
+          xPosition = 1.0f;
+          yPosition = 0.0f;
+          zPosition = 1.0f;
+          velocitySpaceship = 0;
+          //walk = R0 = R1= R2 = 0.0f;
+          EulerXvelocity = EulerYvelocity = EulerY = EulerX = 0;
+
+          Log.i(TAG, "dispatchKeyEvent()  B-bottom Reset");
+          rt = true;
+        } else {
+          rt = true;
+        }
+      }
+      else
+      {
+        rt = true;
+      }
+    }
+    else
+    {
+      rt = super.dispatchKeyEvent(event);
+
+    }
+    return rt;
+  }
+//-------------------------------------------------------------------------------------------------
+
 
   /**
    * Prepares OpenGL ES before we draw a frame.
@@ -414,12 +601,58 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
    */
   @Override
   public void onNewFrame(HeadTransform headTransform) {
-    setCubeRotation();
-
     // Build the camera matrix and apply it to the ModelView.
-    Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+    Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f);
 
+    engine.GetSystemManager().update(1);
+
+    Matrix.setIdentityM(headView, 0);
     headTransform.getHeadView(headView, 0);
+
+    //-------------------------------------------------------------------------------------------------
+
+    Matrix.setIdentityM(copym, 0);
+    Matrix.setRotateEulerM(copym, 0, 0, 0, 90);
+
+
+    EulerY = EulerY + EulerYvelocity;
+    EulerX = EulerX + EulerXvelocity;
+
+    headTransform.getForwardVector(forwardVector, 0);
+    headTransform.getEulerAngles(headEuler,0);
+
+    forwardVector[1] = -headView[6];
+    forwardVector[0] =  headView[2];
+
+    velocityX = forwardVector[0];
+    velocityY = -forwardVector[1];
+    velocityZ = -forwardVector[2];
+
+
+    Matrix.setIdentityM(rotateTmp, 0);
+    Matrix.rotateM(rotateTmp,0,-EulerY, 0.0f, 1.0f, 0.0f);
+    Matrix.rotateM(rotateTmp,0,-EulerX, 1.0f, 0.0f, 0.0f);
+    Matrix.multiplyMV(outputVelocityVector, 0, rotateTmp, 0, inputVelocityVector, 0);
+
+    if (velocitySpaceship > 0)
+    {
+
+      //xPosition = xPosition + velocitySpaceship * (velocityX/100.0f);
+      //yPosition = yPosition + velocitySpaceship * (velocityY/100.0f);
+      //zPosition = zPosition + velocitySpaceship * (velocityZ/100.0f);
+
+      xPosition = xPosition - (outputVelocityVector[0] * velocitySpaceship /100.0f);
+      yPosition = yPosition - (outputVelocityVector[1] * velocitySpaceship /100.0f);
+      zPosition = zPosition - (outputVelocityVector[2] * velocitySpaceship /100.0f);
+    }
+
+    LIGHT_POS_IN_WORLD_SPACE[0] = xPosition + LIGHT_POS_IN_WORLD_SPACE_ORIGINAL[0];
+    LIGHT_POS_IN_WORLD_SPACE[1] = yPosition + LIGHT_POS_IN_WORLD_SPACE_ORIGINAL[1];
+    LIGHT_POS_IN_WORLD_SPACE[2] = yPosition + LIGHT_POS_IN_WORLD_SPACE_ORIGINAL[2];
+
+
+    //-------------------------------------------------------------------------------------------------
+
 
     // Update the 3d audio engine with the most recent head rotation.
     headTransform.getQuaternion(headRotation, 0);
@@ -428,11 +661,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     // Regular update call to GVR audio engine.
     gvrAudioEngine.update();
 
-    checkGLError("onReadyToDraw");
-  }
-
-  protected void setCubeRotation() {
-    Matrix.rotateM(modelCube, 0, TIME_DELTA, 0.5f, 0.5f, 1.0f);
+    Util.checkGlError("onNewFrame");
   }
 
   /**
@@ -443,106 +672,93 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
   @Override
   public void onDrawEye(Eye eye) {
     GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+    // The clear color doesn't matter here because it's completely obscured by
+    // the room. However, the color buffer is still cleared because it may
+    // improve performance.
     GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
-    checkGLError("colorParam");
+    //-------------------------------------------------------------------------------------------------
+    Matrix.setIdentityM(cameraTranslat, 0);
+    Matrix.translateM(cameraTranslat, 0, xPosition, yPosition, zPosition);
+
+    Matrix.setIdentityM(copym, 0);
+    Matrix.setIdentityM(rotateTmp, 0);
+
+
+    Matrix.rotateM(copym, 0, eye.getEyeView(), 0, EulerX, 1, 0, 0);
+    Matrix.rotateM(rotateTmp, 0, copym, 0, EulerY, 0, 1, 0);
+
+    Matrix.setIdentityM(copym, 0);
+
 
     // Apply the eye transformation to the camera.
-    Matrix.multiplyMM(view, 0, eye.getEyeView(), 0, camera, 0);
+    Matrix.multiplyMM(copym, 0, cameraTranslat, 0, camera, 0);
+    //Matrix.multiplyMM(view, 0, eye.getEyeView(), 0, copym, 0);
+    Matrix.multiplyMM(view, 0, rotateTmp, 0, copym, 0);
 
-    // Set the position of the light
-    Matrix.multiplyMV(lightPosInEyeSpace, 0, view, 0, LIGHT_POS_IN_WORLD_SPACE, 0);
+    Matrix.setIdentityM(copym, 0);
+    //Matrix.multiplyMM(view, 0, eye.getEyeView(), 0, camera, 0);
+
+
+    //-------------------------------------------------------------------------------------------------
+
+
+    // Apply the eye transformation to the camera.
+    //Matrix.multiplyMM(view, 0, eye.getEyeView(), 0, camera, 0);
 
     // Build the ModelView and ModelViewProjection matrices
-    // for calculating cube position and light.
+    // for calculating the position of the target object.
     float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
-    Matrix.multiplyMM(modelView, 0, view, 0, modelCube, 0);
-    Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
-    drawCube();
 
-    // Set modelView for the floor, so we draw floor in the correct location
-    Matrix.multiplyMM(modelView, 0, view, 0, modelFloor, 0);
+    engine.GetrenderSystem().view = view;
+    engine.GetrenderSystem().perspective = perspective;
+
+    engine.GetrenderSystem().draw();
+
+    Matrix.multiplyMM(modelView, 0, view, 0, modelTarget, 0);
     Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
-    drawFloor();
+    drawTarget(eye.getType() == Eye.Type.LEFT);
+
+/*
+    // Set modelView for the room, so it's drawn in the correct location
+    Matrix.multiplyMM(modelView, 0, view, 0, modelRoom, 0);
+    Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
+    drawRoom();
+    */
   }
 
   @Override
   public void onFinishFrame(Viewport viewport) {}
 
-  /**
-   * Draw the cube.
-   *
-   * <p>We've set all of our transformation matrices. Now we simply pass them into the shader.
-   */
-  public void drawCube() {
-    GLES20.glUseProgram(cubeProgram);
+  /** Draw the target object. */
+  public void drawTarget(boolean leftEye) {
+    GLES20.glUseProgram(objectProgram);
+    GLES20.glUniformMatrix4fv(objectModelViewProjectionParam, 1, false, modelViewProjection, 0);
+/*
+    if (isLookingAtTarget()) {
+      targetObjectSelectedTextures.get(curTargetObject).bind();
+    } else {
+      targetObjectNotSelectedTextures.get(curTargetObject).bind();
+    }
+  */
 
-    GLES20.glUniform3fv(cubeLightPosParam, 1, lightPosInEyeSpace, 0);
+    if (leftEye) {
+      sterioTextures.get(0).bind();
+    } else {
+      sterioTextures.get(1).bind();
+    }
 
-    // Set the Model in the shader, used to calculate lighting
-    GLES20.glUniformMatrix4fv(cubeModelParam, 1, false, modelCube, 0);
-
-    // Set the ModelView in the shader, used to calculate lighting
-    GLES20.glUniformMatrix4fv(cubeModelViewParam, 1, false, modelView, 0);
-
-    // Set the position of the cube
-    GLES20.glVertexAttribPointer(
-        cubePositionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, cubeVertices);
-
-    // Set the ModelViewProjection matrix in the shader.
-    GLES20.glUniformMatrix4fv(cubeModelViewProjectionParam, 1, false, modelViewProjection, 0);
-
-    // Set the normal positions of the cube, again for shading
-    GLES20.glVertexAttribPointer(cubeNormalParam, 3, GLES20.GL_FLOAT, false, 0, cubeNormals);
-    GLES20.glVertexAttribPointer(cubeColorParam, 4, GLES20.GL_FLOAT, false, 0,
-        isLookingAtObject() ? cubeFoundColors : cubeColors);
-
-    // Enable vertex arrays
-    GLES20.glEnableVertexAttribArray(cubePositionParam);
-    GLES20.glEnableVertexAttribArray(cubeNormalParam);
-    GLES20.glEnableVertexAttribArray(cubeColorParam);
-
-    GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
-
-    // Disable vertex arrays
-    GLES20.glDisableVertexAttribArray(cubePositionParam);
-    GLES20.glDisableVertexAttribArray(cubeNormalParam);
-    GLES20.glDisableVertexAttribArray(cubeColorParam);
-    
-    checkGLError("Drawing cube");
+    targetObjectMeshes.get(curTargetObject).draw();
+    Util.checkGlError("drawTarget");
   }
 
-  /**
-   * Draw the floor.
-   *
-   * <p>This feeds in data for the floor into the shader. Note that this doesn't feed in data about
-   * position of the light, so if we rewrite our code to draw the floor first, the lighting might
-   * look strange.
-   */
-  public void drawFloor() {
-    GLES20.glUseProgram(floorProgram);
-
-    // Set ModelView, MVP, position, normals, and color.
-    GLES20.glUniform3fv(floorLightPosParam, 1, lightPosInEyeSpace, 0);
-    GLES20.glUniformMatrix4fv(floorModelParam, 1, false, modelFloor, 0);
-    GLES20.glUniformMatrix4fv(floorModelViewParam, 1, false, modelView, 0);
-    GLES20.glUniformMatrix4fv(floorModelViewProjectionParam, 1, false, modelViewProjection, 0);
-    GLES20.glVertexAttribPointer(
-        floorPositionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, floorVertices);
-    GLES20.glVertexAttribPointer(floorNormalParam, 3, GLES20.GL_FLOAT, false, 0, floorNormals);
-    GLES20.glVertexAttribPointer(floorColorParam, 4, GLES20.GL_FLOAT, false, 0, floorColors);
-
-    GLES20.glEnableVertexAttribArray(floorPositionParam);
-    GLES20.glEnableVertexAttribArray(floorNormalParam);
-    GLES20.glEnableVertexAttribArray(floorColorParam);
-
-    GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 24);
-
-    GLES20.glDisableVertexAttribArray(floorPositionParam);
-    GLES20.glDisableVertexAttribArray(floorNormalParam);
-    GLES20.glDisableVertexAttribArray(floorColorParam);
-
-    checkGLError("drawing floor");
+  /** Draw the room. */
+  public void drawRoom() {
+    GLES20.glUseProgram(objectProgram);
+    GLES20.glUniformMatrix4fv(objectModelViewProjectionParam, 1, false, modelViewProjection, 0);
+    roomTex.bind();
+    room.draw();
+    Util.checkGlError("drawRoom");
   }
 
   /**
@@ -552,60 +768,50 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
   public void onCardboardTrigger() {
     Log.i(TAG, "onCardboardTrigger");
 
-    if (isLookingAtObject()) {
+    if (isLookingAtTarget()) {
       successSourceId = gvrAudioEngine.createStereoSound(SUCCESS_SOUND_FILE);
       gvrAudioEngine.playSound(successSourceId, false /* looping disabled */);
-      hideObject();
+      hideTarget();
     }
-
-    // Always give user feedback.
-    vibrator.vibrate(50);
   }
 
-  /**
-   * Find a new random position for the object.
-   *
-   * <p>We'll rotate it around the Y-axis so it's out of sight, and then up or down by a little bit.
-   */
-  protected void hideObject() {
+  /** Find a new random position for the target object. */
+  private void hideTarget() {
     float[] rotationMatrix = new float[16];
     float[] posVec = new float[4];
 
-    // First rotate in XZ plane, between 90 and 270 deg away, and scale so that we vary
-    // the object's distance from the user.
-    float angleXZ = (float) Math.random() * 180 + 90;
-    Matrix.setRotateM(rotationMatrix, 0, angleXZ, 0f, 1f, 0f);
-    float oldObjectDistance = objectDistance;
-    objectDistance =
-        (float) Math.random() * (MAX_MODEL_DISTANCE - MIN_MODEL_DISTANCE) + MIN_MODEL_DISTANCE;
-    float objectScalingFactor = objectDistance / oldObjectDistance;
-    Matrix.scaleM(rotationMatrix, 0, objectScalingFactor, objectScalingFactor, objectScalingFactor);
-    Matrix.multiplyMV(posVec, 0, rotationMatrix, 0, modelCube, 12);
+    // Matrix.setRotateM takes the angle in degrees, but Math.tan takes the angle in radians, so
+    // yaw is in degrees and pitch is in radians.
+    float yawDegrees = (random.nextFloat() - 0.5f) * 2.0f * MAX_YAW;
+    float pitchRadians = (float) Math.toRadians((random.nextFloat() - 0.5f) * 2.0f * MAX_PITCH);
 
-    float angleY = (float) Math.random() * 80 - 40; // Angle in Y plane, between -40 and 40.
-    angleY = (float) Math.toRadians(angleY);
-    float newY = (float) Math.tan(angleY) * objectDistance;
+    Matrix.setRotateM(rotationMatrix, 0, yawDegrees, 0.0f, 1.0f, 0.0f);
+    targetDistance =
+        random.nextFloat() * (MAX_TARGET_DISTANCE - MIN_TARGET_DISTANCE) + MIN_TARGET_DISTANCE;
+    targetPosition = new float[] {0.0f, 0.0f, -targetDistance};
+    Matrix.setIdentityM(modelTarget, 0);
+    Matrix.translateM(modelTarget, 0, targetPosition[0], targetPosition[1], targetPosition[2]);
+    Matrix.multiplyMV(posVec, 0, rotationMatrix, 0, modelTarget, 12);
 
-    modelPosition[0] = posVec[0];
-    modelPosition[1] = newY;
-    modelPosition[2] = posVec[2];
+    targetPosition[0] = posVec[0];
+    targetPosition[1] = (float) Math.tan(pitchRadians) * targetDistance;
+    targetPosition[2] = posVec[2];
 
-    updateModelPosition();
+    updateTargetPosition();
+    curTargetObject = random.nextInt(TARGET_MESH_COUNT);
   }
 
   /**
-   * Check if user is looking at object by calculating where the object is in eye-space.
+   * Check if user is looking at the target object by calculating where the object is in eye-space.
    *
-   * @return true if the user is looking at the object.
+   * @return true if the user is looking at the target object.
    */
-  private boolean isLookingAtObject() {
+  private boolean isLookingAtTarget() {
     // Convert object space to camera space. Use the headView from onNewFrame.
-    Matrix.multiplyMM(modelView, 0, headView, 0, modelCube, 0);
+    Matrix.multiplyMM(modelView, 0, headView, 0, modelTarget, 0);
     Matrix.multiplyMV(tempPosition, 0, modelView, 0, POS_MATRIX_MULTIPLY_VEC, 0);
 
-    float pitch = (float) Math.atan2(tempPosition[1], -tempPosition[2]);
-    float yaw = (float) Math.atan2(tempPosition[0], -tempPosition[2]);
-
-    return Math.abs(pitch) < PITCH_LIMIT && Math.abs(yaw) < YAW_LIMIT;
+    float angle = Util.angleBetweenVectors(tempPosition, FORWARD_VEC);
+    return angle < ANGLE_LIMIT;
   }
 }

@@ -1,0 +1,1725 @@
+diff --git a/.gitignore b/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/LICENSE b/LICENSE
+old mode 100644
+new mode 100755
+diff --git a/NOTICE b/NOTICE
+old mode 100644
+new mode 100755
+diff --git a/README.md b/README.md
+old mode 100644
+new mode 100755
+diff --git a/apks/controller_emulator.apk b/apks/controller_emulator.apk
+old mode 100644
+new mode 100755
+diff --git a/assets/README.md b/assets/README.md
+old mode 100644
+new mode 100755
+diff --git a/assets/panoramas/testRoom1_2kMono.jpg b/assets/panoramas/testRoom1_2kMono.jpg
+old mode 100644
+new mode 100755
+diff --git a/assets/panoramas/testRoom1_2kStereo.jpg b/assets/panoramas/testRoom1_2kStereo.jpg
+old mode 100644
+new mode 100755
+diff --git a/assets/videos/testRoom1_1080Stereo.mp4 b/assets/videos/testRoom1_1080Stereo.mp4
+old mode 100644
+new mode 100755
+diff --git a/assets/videos/testRoom1_1920Mono.mp4 b/assets/videos/testRoom1_1920Mono.mp4
+old mode 100644
+new mode 100755
+diff --git a/build.gradle b/build.gradle
+index ed86b14..2e53d27 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -3,10 +3,11 @@
+ buildscript {
+     // This configures the Gradle build system, but not the GVR components.
+     repositories {
++        google()
+         jcenter()
+     }
+     dependencies {
+-        classpath 'com.android.tools.build:gradle-experimental:0.8.1'
++        classpath 'com.android.tools.build:gradle:3.1.2'
+ 
+         // NOTE: Do not place your application dependencies here; they belong
+         // in the individual module build.gradle files
+@@ -15,13 +16,13 @@ buildscript {
+ 
+ allprojects {
+     repositories {
+-        // For GVR components, the official source of the .aars is the Google
+-        // repository.
++        google()
++        // For GVR components, the official source of the .aars is JCenter.
++        jcenter()
+         maven {
+-            url "http://google.bintray.com/googlevr"
++            // For Android support library components.
++            url "https://maven.google.com"
+         }
+-        // We also use components from JCenter.
+-        jcenter()
+         // You can also use a local Maven repository if desired.
+         mavenLocal()
+     }
+@@ -34,13 +35,13 @@ task clean(type: Delete) {
+ // The dependencies for NDK builds live inside the .aar files so they need to
+ // be extracted before NDK targets can build.
+ task extractAudioSo(type: Copy) {
+-    from zipTree("${project.rootDir}/libraries/sdk-audio-1.10.0.aar")
++    from zipTree("${project.rootDir}/libraries/sdk-audio-1.180.0.aar")
+     into "${project.rootDir}/libraries/"
+     include "jni/**/libgvr_audio.so"
+ }
+ 
+ task extractGvrSo(type: Copy) {
+-    from zipTree("${project.rootDir}/libraries/sdk-base-1.10.0.aar")
++    from zipTree("${project.rootDir}/libraries/sdk-base-1.180.0.aar")
+     into "${project.rootDir}/libraries/"
+     include "jni/**/libgvr.so"
+ }
+@@ -48,3 +49,8 @@ task extractGvrSo(type: Copy) {
+ task extractNdk { }
+ extractNdk.dependsOn extractAudioSo
+ extractNdk.dependsOn extractGvrSo
++
++task deleteNdk(type: Delete) {
++    delete "${project.rootDir}/libraries/jni"
++}
++clean.dependsOn(deleteNdk)
+diff --git a/com.pogo.wiener.dog/.gitignore b/com.pogo.wiener.dog/.gitignore
+old mode 100644
+new mode 100755
+diff --git a/com.pogo.wiener.dog/build.gradle b/com.pogo.wiener.dog/build.gradle
+old mode 100644
+new mode 100755
+diff --git a/com.pogo.wiener.dog/proguard-rules.pro b/com.pogo.wiener.dog/proguard-rules.pro
+old mode 100644
+new mode 100755
+diff --git a/com.pogo.wiener.dog/src/androidTest/java/com/example/testingmatrix/ExampleInstrumentedTest.java b/com.pogo.wiener.dog/src/androidTest/java/com/example/testingmatrix/ExampleInstrumentedTest.java
+old mode 100644
+new mode 100755
+diff --git a/com.pogo.wiener.dog/src/main/AndroidManifest.xml b/com.pogo.wiener.dog/src/main/AndroidManifest.xml
+old mode 100644
+new mode 100755
+diff --git a/com.pogo.wiener.dog/src/main/res/values/strings.xml b/com.pogo.wiener.dog/src/main/res/values/strings.xml
+old mode 100644
+new mode 100755
+diff --git a/com.pogo.wiener.dog/src/test/java/com/example/testingmatrix/ExampleUnitTest.java b/com.pogo.wiener.dog/src/test/java/com/example/testingmatrix/ExampleUnitTest.java
+old mode 100644
+new mode 100755
+diff --git a/gradle/wrapper/gradle-wrapper.jar b/gradle/wrapper/gradle-wrapper.jar
+old mode 100644
+new mode 100755
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+old mode 100644
+new mode 100755
+index 1853f99..86e1494
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,6 +1,6 @@
+-#Tue Oct 18 14:52:21 PDT 2016
++#Sat Dec 01 18:02:50 EST 2018
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+ zipStoreBase=GRADLE_USER_HOME
+ zipStorePath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-2.14.1-bin.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-4.4-all.zip
+diff --git a/gradlew.bat b/gradlew.bat
+old mode 100644
+new mode 100755
+diff --git a/libraries/headers/vr/gvr/capi/include/gvr.h b/libraries/headers/vr/gvr/capi/include/gvr.h
+old mode 100644
+new mode 100755
+diff --git a/libraries/headers/vr/gvr/capi/include/gvr_audio.h b/libraries/headers/vr/gvr/capi/include/gvr_audio.h
+old mode 100644
+new mode 100755
+diff --git a/libraries/headers/vr/gvr/capi/include/gvr_controller.h b/libraries/headers/vr/gvr/capi/include/gvr_controller.h
+old mode 100644
+new mode 100755
+diff --git a/libraries/headers/vr/gvr/capi/include/gvr_types.h b/libraries/headers/vr/gvr/capi/include/gvr_types.h
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-audio-1.10.0.aar b/libraries/sdk-audio-1.10.0.aar
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-audio-1.10.0.pom b/libraries/sdk-audio-1.10.0.pom
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-base-1.10.0.aar b/libraries/sdk-base-1.10.0.aar
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-base-1.10.0.pom b/libraries/sdk-base-1.10.0.pom
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-common-1.10.0.aar b/libraries/sdk-common-1.10.0.aar
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-common-1.10.0.pom b/libraries/sdk-common-1.10.0.pom
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-commonwidget-1.10.0.aar b/libraries/sdk-commonwidget-1.10.0.aar
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-commonwidget-1.10.0.pom b/libraries/sdk-commonwidget-1.10.0.pom
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-controller-1.10.0.aar b/libraries/sdk-controller-1.10.0.aar
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-controller-1.10.0.pom b/libraries/sdk-controller-1.10.0.pom
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-panowidget-1.10.0.aar b/libraries/sdk-panowidget-1.10.0.aar
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-panowidget-1.10.0.pom b/libraries/sdk-panowidget-1.10.0.pom
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-videowidget-1.10.0.aar b/libraries/sdk-videowidget-1.10.0.aar
+old mode 100644
+new mode 100755
+diff --git a/libraries/sdk-videowidget-1.10.0.pom b/libraries/sdk-videowidget-1.10.0.pom
+old mode 100644
+new mode 100755
+diff --git a/proguard-gvr.txt b/proguard-gvr.txt
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/build.gradle b/samples/ndk-controllerpaint/build.gradle
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/AndroidManifest.xml b/samples/ndk-controllerpaint/src/main/AndroidManifest.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/assets/ground_texture64x64.bin b/samples/ndk-controllerpaint/src/main/assets/ground_texture64x64.bin
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/assets/paint_texture64x64.bin b/samples/ndk-controllerpaint/src/main/assets/paint_texture64x64.bin
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/java/com/google/vr/ndk/samples/controllerpaint/MainActivity.java b/samples/ndk-controllerpaint/src/main/java/com/google/vr/ndk/samples/controllerpaint/MainActivity.java
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/jni/app_jni.cc b/samples/ndk-controllerpaint/src/main/jni/app_jni.cc
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/jni/app_jni.h b/samples/ndk-controllerpaint/src/main/jni/app_jni.h
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/jni/demoapp.cc b/samples/ndk-controllerpaint/src/main/jni/demoapp.cc
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/jni/demoapp.h b/samples/ndk-controllerpaint/src/main/jni/demoapp.h
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/jni/utils.cc b/samples/ndk-controllerpaint/src/main/jni/utils.cc
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/jni/utils.h b/samples/ndk-controllerpaint/src/main/jni/utils.h
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/res/drawable-nodpi/vr_icon.png b/samples/ndk-controllerpaint/src/main/res/drawable-nodpi/vr_icon.png
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/res/drawable-nodpi/vr_icon_background.png b/samples/ndk-controllerpaint/src/main/res/drawable-nodpi/vr_icon_background.png
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-controllerpaint/src/main/res/values/strings.xml b/samples/ndk-controllerpaint/src/main/res/values/strings.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-treasurehunt/build.gradle b/samples/ndk-treasurehunt/build.gradle
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-treasurehunt/src/main/AndroidManifest.xml b/samples/ndk-treasurehunt/src/main/AndroidManifest.xml
+old mode 100644
+new mode 100755
+index 56c047a..e9f0708
+--- a/samples/ndk-treasurehunt/src/main/AndroidManifest.xml
++++ b/samples/ndk-treasurehunt/src/main/AndroidManifest.xml
+@@ -12,6 +12,7 @@
+   <uses-permission android:name="android.permission.VIBRATE"/>
+   <!-- Required to read the paired viewer's distortion parameters. -->
+   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
++  <uses-permission android:name="android.permission.WAKE_LOCK"/>
+ 
+   <!-- Make accelerometer and gyroscope hard requirements for good head tracking. -->
+   <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true"/>
+diff --git a/samples/ndk-treasurehunt/src/main/assets/cube_sound.wav b/samples/ndk-treasurehunt/src/main/assets/cube_sound.wav
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-treasurehunt/src/main/assets/success.wav b/samples/ndk-treasurehunt/src/main/assets/success.wav
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-treasurehunt/src/main/java/com/google/vr/ndk/samples/treasurehunt/MainActivity.java b/samples/ndk-treasurehunt/src/main/java/com/google/vr/ndk/samples/treasurehunt/MainActivity.java
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-treasurehunt/src/main/jni/treasure_hunt_jni.cc b/samples/ndk-treasurehunt/src/main/jni/treasure_hunt_jni.cc
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-treasurehunt/src/main/jni/treasure_hunt_renderer.cc b/samples/ndk-treasurehunt/src/main/jni/treasure_hunt_renderer.cc
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-treasurehunt/src/main/jni/treasure_hunt_renderer.h b/samples/ndk-treasurehunt/src/main/jni/treasure_hunt_renderer.h
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-treasurehunt/src/main/jni/world_layout_data.h b/samples/ndk-treasurehunt/src/main/jni/world_layout_data.h
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-treasurehunt/src/main/res/drawable-nodpi/vr_icon.png b/samples/ndk-treasurehunt/src/main/res/drawable-nodpi/vr_icon.png
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-treasurehunt/src/main/res/drawable-nodpi/vr_icon_background.png b/samples/ndk-treasurehunt/src/main/res/drawable-nodpi/vr_icon_background.png
+old mode 100644
+new mode 100755
+diff --git a/samples/ndk-treasurehunt/src/main/res/values/strings.xml b/samples/ndk-treasurehunt/src/main/res/values/strings.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-controllerclient/build.gradle b/samples/sdk-controllerclient/build.gradle
+index 43d9029..14e03cf 100644
+--- a/samples/sdk-controllerclient/build.gradle
++++ b/samples/sdk-controllerclient/build.gradle
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2015 Google Inc. All rights reserved.
++ * Copyright 2017 Google Inc. All rights reserved.
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+@@ -13,30 +13,28 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+-apply plugin: 'com.android.model.application'
++apply plugin: 'com.android.application'
+ 
+-model {
+-    android {
+-        compileSdkVersion 24
+-        buildToolsVersion "24.0.0"
++android {
++    compileSdkVersion 26
+ 
+-        defaultConfig {
+-            minSdkVersion.apiLevel 24
+-            targetSdkVersion.apiLevel 24
+-            versionCode 1
+-            versionName "1.0"
+-        }
++    defaultConfig {
++        minSdkVersion 24
++        targetSdkVersion 24
++        versionCode 1
++        versionName "1.0"
++    }
+ 
+-        buildTypes {
+-            release {
+-                minifyEnabled true
+-                proguardFiles.add(file('../../proguard-gvr.txt'))
+-            }
++    buildTypes {
++        release {
++            minifyEnabled true
++            proguardFiles.add(file('../../proguard-gvr.txt'))
+         }
++
+     }
+ }
+ 
+ dependencies {
+-    compile 'com.google.vr:sdk-base:1.10.0'
+-    compile 'com.google.vr:sdk-controller:1.10.0'
++    compile 'com.google.vr:sdk-base:1.180.0'
++    compile 'com.google.vr:sdk-controller:1.180.0'
+ }
+diff --git a/samples/sdk-controllerclient/src/main/AndroidManifest.xml b/samples/sdk-controllerclient/src/main/AndroidManifest.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-controllerclient/src/main/java/com/google/vr/samples/controllerclient/ControllerClientActivity.java b/samples/sdk-controllerclient/src/main/java/com/google/vr/samples/controllerclient/ControllerClientActivity.java
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-controllerclient/src/main/java/com/google/vr/samples/controllerclient/OrientationView.java b/samples/sdk-controllerclient/src/main/java/com/google/vr/samples/controllerclient/OrientationView.java
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-controllerclient/src/main/res/layout/main_layout.xml b/samples/sdk-controllerclient/src/main/res/layout/main_layout.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-controllerclient/src/main/res/values/colors.xml b/samples/sdk-controllerclient/src/main/res/values/colors.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-controllerclient/src/main/res/values/dimens.xml b/samples/sdk-controllerclient/src/main/res/values/dimens.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-controllerclient/src/main/res/values/strings.xml b/samples/sdk-controllerclient/src/main/res/values/strings.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplepanowidget/build.gradle b/samples/sdk-simplepanowidget/build.gradle
+index 92f1c38..eb6ebd5 100644
+--- a/samples/sdk-simplepanowidget/build.gradle
++++ b/samples/sdk-simplepanowidget/build.gradle
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright 2015 Google Inc. All rights reserved.
++ * Copyright 2017 Google Inc. All rights reserved.
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+@@ -13,29 +13,27 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+-apply plugin: 'com.android.model.application'
++apply plugin: 'com.android.application'
+ 
+-model {
+-    android {
+-        compileSdkVersion 24
+-        buildToolsVersion "24.0.0"
++android {
++    compileSdkVersion 26
+ 
+-        defaultConfig {
+-            minSdkVersion.apiLevel 19
+-            targetSdkVersion.apiLevel 22
+-            versionCode 1
+-            versionName "1.0"
+-        }
++    defaultConfig {
++        minSdkVersion 19
++        targetSdkVersion 22
++        versionCode 1
++        versionName "1.0"
++    }
+ 
+-        buildTypes {
+-            release {
+-                minifyEnabled true
+-                proguardFiles.add(file('../../proguard-gvr.txt'))
+-            }
++    buildTypes {
++        release {
++            minifyEnabled true
++            proguardFiles.add(file('../../proguard-gvr.txt'))
+         }
++
+     }
+ }
+ 
+ dependencies {
+-    compile 'com.google.vr:sdk-panowidget:1.10.0'
++    compile 'com.google.vr:sdk-panowidget:1.180.0'
+ }
+diff --git a/samples/sdk-simplepanowidget/src/main/AndroidManifest.xml b/samples/sdk-simplepanowidget/src/main/AndroidManifest.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplepanowidget/src/main/assets/andes.jpg b/samples/sdk-simplepanowidget/src/main/assets/andes.jpg
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplepanowidget/src/main/java/com/google/vr/sdk/samples/simplepanowidget/SimpleVrPanoramaActivity.java b/samples/sdk-simplepanowidget/src/main/java/com/google/vr/sdk/samples/simplepanowidget/SimpleVrPanoramaActivity.java
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplepanowidget/src/main/res/layout/main_layout.xml b/samples/sdk-simplepanowidget/src/main/res/layout/main_layout.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplepanowidget/src/main/res/values/colors.xml b/samples/sdk-simplepanowidget/src/main/res/values/colors.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplepanowidget/src/main/res/values/dimens.xml b/samples/sdk-simplepanowidget/src/main/res/values/dimens.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplepanowidget/src/main/res/values/strings.xml b/samples/sdk-simplepanowidget/src/main/res/values/strings.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplepanowidget/src/main/res/values/styles.xml b/samples/sdk-simplepanowidget/src/main/res/values/styles.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplevideowidget/build.gradle b/samples/sdk-simplevideowidget/build.gradle
+old mode 100644
+new mode 100755
+index 9d393f3..7db6498
+--- a/samples/sdk-simplevideowidget/build.gradle
++++ b/samples/sdk-simplevideowidget/build.gradle
+@@ -13,16 +13,16 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+-apply plugin: 'com.android.model.application'
++apply plugin: 'com.android.application'
+ 
+ model {
+     android {
+-        compileSdkVersion 24
++        compileSdkVersion 26
+         buildToolsVersion "24.0.0"
+ 
+         defaultConfig {
+-            minSdkVersion.apiLevel 19
+-            targetSdkVersion.apiLevel 22
++            minSdkVersion 19
++            targetSdkVersion 26
+             versionCode 1
+             versionName "1.0"
+         }
+diff --git a/samples/sdk-simplevideowidget/src/main/AndroidManifest.xml b/samples/sdk-simplevideowidget/src/main/AndroidManifest.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplevideowidget/src/main/assets/congo.mp4 b/samples/sdk-simplevideowidget/src/main/assets/congo.mp4
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplevideowidget/src/main/java/com/google/vr/sdk/samples/simplevideowidget/SimpleVrVideoActivity.java b/samples/sdk-simplevideowidget/src/main/java/com/google/vr/sdk/samples/simplevideowidget/SimpleVrVideoActivity.java
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplevideowidget/src/main/res/drawable-hdpi/volume_off.png b/samples/sdk-simplevideowidget/src/main/res/drawable-hdpi/volume_off.png
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplevideowidget/src/main/res/drawable-hdpi/volume_on.png b/samples/sdk-simplevideowidget/src/main/res/drawable-hdpi/volume_on.png
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplevideowidget/src/main/res/layout/main_layout.xml b/samples/sdk-simplevideowidget/src/main/res/layout/main_layout.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplevideowidget/src/main/res/values/colors.xml b/samples/sdk-simplevideowidget/src/main/res/values/colors.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplevideowidget/src/main/res/values/dimens.xml b/samples/sdk-simplevideowidget/src/main/res/values/dimens.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplevideowidget/src/main/res/values/strings.xml b/samples/sdk-simplevideowidget/src/main/res/values/strings.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-simplevideowidget/src/main/res/values/styles.xml b/samples/sdk-simplevideowidget/src/main/res/values/styles.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/build.gradle b/samples/sdk-treasurehunt/build.gradle
+old mode 100644
+new mode 100755
+index 51e2d75..333782d
+--- a/samples/sdk-treasurehunt/build.gradle
++++ b/samples/sdk-treasurehunt/build.gradle
+@@ -13,16 +13,16 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+-apply plugin: 'com.android.model.application'
++apply plugin: 'com.android.application'
+ 
+ model {
+     android {
+-        compileSdkVersion 24
++        compileSdkVersion 26
+         buildToolsVersion "24.0.0"
+ 
+         defaultConfig {
+-            minSdkVersion.apiLevel 19
+-            targetSdkVersion.apiLevel 24
++            minSdkVersion 19
++            targetSdkVersion 26
+             versionCode 1
+             versionName "1.0"
+         }
+diff --git a/samples/sdk-treasurehunt/src/main/AndroidManifest.xml b/samples/sdk-treasurehunt/src/main/AndroidManifest.xml
+old mode 100644
+new mode 100755
+index f536a0d..bd33d35
+--- a/samples/sdk-treasurehunt/src/main/AndroidManifest.xml
++++ b/samples/sdk-treasurehunt/src/main/AndroidManifest.xml
+@@ -31,7 +31,7 @@
+                 android:name=".TreasureHuntActivity"
+                 android:label="@string/app_name"
+                 android:screenOrientation="landscape"
+-                android:configChanges="orientation|keyboardHidden|screenSize"
++                android:configChanges="orientation|keyboardHidden|screenSize|keyboard"
+                 android:enableVrMode="@string/gvr_vr_mode_component"
+                 android:resizeableActivity="false">
+             <!-- The VR icon to be used in Daydream Home comes in two parts:
+diff --git a/samples/sdk-treasurehunt/src/main/assets/cube_sound.wav b/samples/sdk-treasurehunt/src/main/assets/cube_sound.wav
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/assets/success.wav b/samples/sdk-treasurehunt/src/main/assets/success.wav
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/TreasureHuntActivity.java b/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/TreasureHuntActivity.java
+old mode 100644
+new mode 100755
+index b3cf5c4..fc807c8
+--- a/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/TreasureHuntActivity.java
++++ b/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/TreasureHuntActivity.java
+@@ -22,6 +22,11 @@ import android.opengl.Matrix;
+ import android.os.Bundle;
+ import android.os.Vibrator;
+ import android.util.Log;
++import android.view.KeyEvent;
++import android.view.MotionEvent;
++import android.view.InputDevice;
++import android.view.WindowManager;
++
+ import com.google.vr.sdk.audio.GvrAudioEngine;
+ import com.google.vr.sdk.base.AndroidCompat;
+ import com.google.vr.sdk.base.Eye;
+@@ -38,6 +43,13 @@ import java.nio.ByteOrder;
+ import java.nio.FloatBuffer;
+ import javax.microedition.khronos.egl.EGLConfig;
+ 
++import com.google.vr.sdk.samples.treasurehunt.common.RawResourceReader;
++
++import com.google.vr.sdk.samples.treasurehunt.common.TextureHelper;
++import com.google.vr.sdk.samples.treasurehunt.common.ShaderHelper;
++import com.google.vr.sdk.samples.treasurehunt.common.Circuit;
++
++
+ /**
+  * A Google VR sample application.
+  *
+@@ -50,8 +62,52 @@ import javax.microedition.khronos.egl.EGLConfig;
+  */
+ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoRenderer {
+ 
+-  protected float[] modelCube;
+-  protected float[] modelPosition;
++
++  /** This is a handle to our texture data. */
++  private int mTextureDataHandleR;
++  private int mTextureDataHandleL;
++
++  private static float xPosition = 20.0f;
++  private static float yPosition = 0.0f;
++  private static float zPosition = 20.0f;
++
++  private static float velocityX = 0.0f;
++  private static float velocityY = 0.0f;
++  private static float velocityZ = 0.0f;
++  private static float velocitySpaceship = 0.0f;
++
++  private  static float[] forwardVector = new float[3];
++
++  float EulerXvelocity = 0;
++  float EulerYvelocity = 0;
++  float EulerX = 0;
++  float EulerY = 0;
++  float walk = 0.0f;
++  float R0 = 0.0f;
++  float R1 = 0.0f;
++  float R2 = 0.0f;
++  float headEuler[] = new float[3];
++
++  private static  float[] headViewx = new float[16];
++  private static  float[][] actors = new float[9][3];
++
++  private static final float inputVelocityVector[] = new float[] {0.0f,0.0f,-1.0f,0.0f};
++  private static float outputVelocityVector[] = new float[4];
++
++
++  private Context mActivityContext;
++
++  int numOfCubes = 0;
++  int numOfCubesInSpaceShip = 5;
++  protected float[][] modelCube;
++  protected float[][] modelSpaceShip;
++
++  protected static float[] modelPosition  = new float[3];
++
++  float[] cameraTranslat = new float[16];
++  float[] cameraRotate = new float[16];
++  float[] copym = new float[16];
++  float[] rotateTmp = new float[16];
+ 
+   private static final String TAG = "TreasureHuntActivity";
+ 
+@@ -68,6 +124,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+ 
+   // We keep the light always position just above the user.
+   private static final float[] LIGHT_POS_IN_WORLD_SPACE = new float[] {0.0f, 2.0f, 0.0f, 1.0f};
++  private static final float[] LIGHT_POS_IN_WORLD_SPACE_ORIGINAL = new float[] {0.0f, 2.0f, 0.0f, 1.0f};
+ 
+   // Convenience vector for extracting the position from a matrix via multiplication.
+   private static final float[] POS_MATRIX_MULTIPLY_VEC = {0, 0, 0, 1.0f};
+@@ -83,6 +140,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+   private FloatBuffer floorVertices;
+   private FloatBuffer floorColors;
+   private FloatBuffer floorNormals;
++  private FloatBuffer CubeTextureCoordinateData;
+ 
+   private FloatBuffer cubeVertices;
+   private FloatBuffer cubeColors;
+@@ -95,10 +153,18 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+   private int cubePositionParam;
+   private int cubeNormalParam;
+   private int cubeColorParam;
+-  private int cubeModelParam;
++  //private int cubeModelParam;
+   private int cubeModelViewParam;
+   private int cubeModelViewProjectionParam;
+   private int cubeLightPosParam;
++  private int cubeTextureUniformParam;
++
++
++  // --------------------------- new  --------------------------------
++  /** This will be used to pass in model texture coordinate information. */
++  private int CubeTextureCoordinateDataParam;
++  // --------------------------- end of new  --------------------------------
++
+ 
+   private int floorPositionParam;
+   private int floorNormalParam;
+@@ -122,6 +188,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+   private float floorDepth = 20f;
+ 
+   private Vibrator vibrator;
++  private VrOverlayView overlayView;
+ 
+   private GvrAudioEngine gvrAudioEngine;
+   private volatile int sourceId = GvrAudioEngine.INVALID_ID;
+@@ -158,6 +225,42 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+     return shader;
+   }
+ 
++  public void logToTheScreen()
++  {
++    String displaymessage = String.format(
++            "P(%5.2f ,%5.2f, %5.2f)\n" +    // character position
++                    "HR(%5.2f ,%5.2f, %5.2f)\n" +   // character head rotation
++                    "HV(%5.2f ,%5.2f, %5.2f)\n" +   // character head vector
++                    "SR(%5.2f ,%5.2f, %5.2f)\n" +   // ship rotation
++                    "SV(%5.2f ,%5.2f, %5.2f)\n",   // ship velocity
++            xPosition, yPosition, zPosition,
++            headEuler[0], headEuler[1], headEuler[2],
++            velocityX, velocityY, velocityZ,
++            EulerX,EulerY, 0.0f,
++            outputVelocityVector[0],outputVelocityVector[1],outputVelocityVector[2]);
++
++    overlayView.show3DToast(displaymessage);
++  }
++
++  public void logToTheScreen(String message)
++  {
++    String displaymessage = String.format(
++            "%s\n" +                        // message
++            "P(%5.2f ,%5.2f, %5.2f)\n" +    // character position
++            "HR(%5.2f ,%5.2f, %5.2f)\n" +   // character head rotation
++            "HV(%5.2f ,%5.2f, %5.2f)\n" +   // character head vector
++            "SR(%5.2f ,%5.2f, %5.2f)\n" +   // ship rotation
++            "SV(%5.2f ,%5.2f, %5.2f)\n",   // ship velocity
++            message,
++            xPosition, yPosition, zPosition,
++            headEuler[0], headEuler[1], headEuler[2],
++            velocityX, velocityY, velocityZ,
++            EulerX,EulerY, 0.0f,
++            outputVelocityVector[0],outputVelocityVector[1],outputVelocityVector[2]);
++
++    overlayView.show3DToast(displaymessage);
++  }
++
+   /**
+    * Checks if we've had an error inside of OpenGL ES, and if so what that error is.
+    *
+@@ -179,9 +282,16 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+   public void onCreate(Bundle savedInstanceState) {
+     super.onCreate(savedInstanceState);
+ 
++    mActivityContext = getApplicationContext();
++
++
++
++    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
++
+     initializeGvrView();
+ 
+-    modelCube = new float[16];
++    //modelCube = new float[numOfCubes][16];
++    modelSpaceShip = new float[numOfCubesInSpaceShip][16];
+     camera = new float[16];
+     view = new float[16];
+     modelViewProjection = new float[16];
+@@ -189,11 +299,16 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+     modelFloor = new float[16];
+     tempPosition = new float[4];
+     // Model first appears directly in front of user.
+-    modelPosition = new float[] {0.0f, 0.0f, -MAX_MODEL_DISTANCE / 2.0f};
++    modelPosition[0] = 0.0f;
++    modelPosition[1] = 0.0f;
++    modelPosition[2] =  -MAX_MODEL_DISTANCE / 2.0f;
+     headRotation = new float[4];
+     headView = new float[16];
+     vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+ 
++    overlayView = (VrOverlayView) findViewById(R.id.overlay);
++    overlayView.show3DToast("Pull the magnet when you find an object.");
++
+     // Initialize 3D audio engine.
+     gvrAudioEngine = new GvrAudioEngine(this, GvrAudioEngine.RenderingMode.BINAURAL_HIGH_QUALITY);
+   }
+@@ -205,7 +320,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+     gvrView.setEGLConfigChooser(8, 8, 8, 8, 16, 8);
+ 
+     gvrView.setRenderer(this);
+-    gvrView.setTransitionViewEnabled(true);
++    gvrView.setTransitionViewEnabled(false);
+ 
+     // Enable Cardboard-trigger feedback with Daydream headsets. This is a simple way of supporting
+     // Daydream controller input for basic interactions using the existing Cardboard trigger API.
+@@ -228,6 +343,16 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+   }
+ 
+   @Override
++  public void onStop() {
++    super.onStop();
++  }
++
++  @Override
++  public void onDestroy() {
++    super.onDestroy();
++  }
++
++  @Override
+   public void onResume() {
+     super.onResume();
+     gvrAudioEngine.resume();
+@@ -238,6 +363,33 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+     Log.i(TAG, "onRendererShutdown");
+   }
+ 
++  protected String getGridShader()
++  {
++    return RawResourceReader.readTextFileFromRawResource(mActivityContext, R.raw.grid_fragment);
++  }
++
++  protected String getVertexShader()
++  {
++    return RawResourceReader.readTextFileFromRawResource(mActivityContext, R.raw.per_pixel_vertex_shader);
++  }
++
++  protected String getPassThroughFragmentShader()
++  {
++    return RawResourceReader.readTextFileFromRawResource(mActivityContext, R.raw.passthrough_fragment);
++  }
++
++
++  protected String getFragmentShader()
++  {
++    return RawResourceReader.readTextFileFromRawResource(mActivityContext, R.raw.per_pixel_fragment_shader);
++  }
++
++  protected String getLightVertexShader()
++  {
++    return RawResourceReader.readTextFileFromRawResource(mActivityContext, R.raw.light_vertex);
++  }
++
++
+   @Override
+   public void onSurfaceChanged(int width, int height) {
+     Log.i(TAG, "onSurfaceChanged");
+@@ -256,6 +408,12 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+     Log.i(TAG, "onSurfaceCreated");
+     GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f); // Dark background so text shows up well.
+ 
++    // Use culling to remove back faces.
++    GLES20.glEnable(GLES20.GL_CULL_FACE);
++
++    // Enable depth testing
++    GLES20.glEnable(GLES20.GL_DEPTH_TEST);
++
+     ByteBuffer bbVertices = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_COORDS.length * 4);
+     bbVertices.order(ByteOrder.nativeOrder());
+     cubeVertices = bbVertices.asFloatBuffer();
+@@ -300,40 +458,62 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+     floorColors.put(WorldLayoutData.FLOOR_COLORS);
+     floorColors.position(0);
+ 
+-    int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.light_vertex);
+-    int gridShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.grid_fragment);
+-    int passthroughShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.passthrough_fragment);
++    ByteBuffer bbCubeTextureCoordinateData = ByteBuffer.allocateDirect(WorldLayoutData.cubeTextureCoordinateData.length * 4);
++    bbCubeTextureCoordinateData.order(ByteOrder.nativeOrder());
++    CubeTextureCoordinateData = bbCubeTextureCoordinateData.asFloatBuffer();
++    CubeTextureCoordinateData.put(WorldLayoutData.cubeTextureCoordinateData);
++    CubeTextureCoordinateData.position(0);
++
++    // Define a simple shader program for our point.
++    final String vertexShaderStr = getVertexShader();
++    final String fragmentShader = getFragmentShader();
++    final String gridShader = getGridShader();
++    final String lightVertexShader = getLightVertexShader();
++    //final String passThroughFragmentShader = getPassThroughFragmentShader();
++
++    final int vertexShaderHandle = ShaderHelper.compileShader(GLES20.GL_VERTEX_SHADER, vertexShaderStr);
++    final int fragmentShaderHandle = ShaderHelper.compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader);
++    final int gridShaderHandle = ShaderHelper.compileShader(GLES20.GL_FRAGMENT_SHADER, gridShader);
++    final int lightVertexShaderHandle = ShaderHelper.compileShader(GLES20.GL_VERTEX_SHADER, lightVertexShader);
++
++    cubeProgram = ShaderHelper.createAndLinkProgram(vertexShaderHandle, fragmentShaderHandle,
++            new String[] {"a_Position",  "a_Color", "a_Normal", "a_TexCoordinate"});
+ 
+-    cubeProgram = GLES20.glCreateProgram();
+-    GLES20.glAttachShader(cubeProgram, vertexShader);
+-    GLES20.glAttachShader(cubeProgram, passthroughShader);
+-    GLES20.glLinkProgram(cubeProgram);
+-    GLES20.glUseProgram(cubeProgram);
+ 
++    GLES20.glUseProgram(cubeProgram);
+     checkGLError("Cube program");
+ 
++    // Load the texture
++    mTextureDataHandleR = TextureHelper.loadTexture(mActivityContext, R.drawable.bumpy_bricks_public_domain_r);
++    mTextureDataHandleL = TextureHelper.loadTexture(mActivityContext, R.drawable.bumpy_bricks_public_domain_l);
++
++
+     cubePositionParam = GLES20.glGetAttribLocation(cubeProgram, "a_Position");
+-    cubeNormalParam = GLES20.glGetAttribLocation(cubeProgram, "a_Normal");
+     cubeColorParam = GLES20.glGetAttribLocation(cubeProgram, "a_Color");
++    cubeNormalParam = GLES20.glGetAttribLocation(cubeProgram, "a_Normal");
++    CubeTextureCoordinateDataParam = GLES20.glGetAttribLocation(cubeProgram, "a_TexCoordinate");
++    // Stewart
+ 
+-    cubeModelParam = GLES20.glGetUniformLocation(cubeProgram, "u_Model");
++    //cubeModelParam = GLES20.glGetUniformLocation(cubeProgram, "u_Model");
++    cubeModelViewProjectionParam = GLES20.glGetUniformLocation(cubeProgram, "u_MVPMatrix");
+     cubeModelViewParam = GLES20.glGetUniformLocation(cubeProgram, "u_MVMatrix");
+-    cubeModelViewProjectionParam = GLES20.glGetUniformLocation(cubeProgram, "u_MVP");
++    //cubeModelViewParam = GLES20.glGetUniformLocation(cubeProgram, "u_MVMatrix");
+     cubeLightPosParam = GLES20.glGetUniformLocation(cubeProgram, "u_LightPos");
++    cubeTextureUniformParam = GLES20.glGetUniformLocation(cubeProgram, "u_Texture");
+ 
+     checkGLError("Cube program params");
+ 
+-    floorProgram = GLES20.glCreateProgram();
+-    GLES20.glAttachShader(floorProgram, vertexShader);
+-    GLES20.glAttachShader(floorProgram, gridShader);
+-    GLES20.glLinkProgram(floorProgram);
++
++    floorProgram = ShaderHelper.createAndLinkProgram(lightVertexShaderHandle, gridShaderHandle,
++            new String[] {"a_Position",  "a_Color", "a_Normal"});
++
+     GLES20.glUseProgram(floorProgram);
+ 
+     checkGLError("Floor program");
+ 
+     floorModelParam = GLES20.glGetUniformLocation(floorProgram, "u_Model");
+     floorModelViewParam = GLES20.glGetUniformLocation(floorProgram, "u_MVMatrix");
+-    floorModelViewProjectionParam = GLES20.glGetUniformLocation(floorProgram, "u_MVP");
++    floorModelViewProjectionParam = GLES20.glGetUniformLocation(floorProgram, "u_MVPMatrix");
+     floorLightPosParam = GLES20.glGetUniformLocation(floorProgram, "u_LightPos");
+ 
+     floorPositionParam = GLES20.glGetAttribLocation(floorProgram, "a_Position");
+@@ -369,19 +549,104 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+     checkGLError("onSurfaceCreated");
+   }
+ 
++
++
++  void setCubeLoation(float[] location, float x, float y, float z)
++  {
++    Matrix.setIdentityM(location, 0);
++    Matrix.translateM(location, 0, x, y, z);
++  }
+   /**
+    * Updates the cube model position.
+    */
+   protected void updateModelPosition() {
+-    Matrix.setIdentityM(modelCube, 0);
+-    Matrix.translateM(modelCube, 0, modelPosition[0], modelPosition[1], modelPosition[2]);
+ 
+-    // Update the sound location to match it with the new cube position.
+-    if (sourceId != GvrAudioEngine.INVALID_ID) {
+-      gvrAudioEngine.setSoundObjectPosition(
+-          sourceId, modelPosition[0], modelPosition[1], modelPosition[2]);
++    float dist = 3.0f;
++    float shrink = 0.25f;
++    numOfCubes = 0;
++
++    try
++    {
++      Circuit circuit = new Circuit();
++
++      modelCube = circuit.GetTransforms(9);
++
++      setCubeLoation(modelCube[0], 0.0f, 0.0f, 0.0f);  //Center
++      setCubeLoation(modelCube[1], dist, 0.0f, 0.0f );  // X axis
++      setCubeLoation(modelCube[2], 6 * dist, 0.0f, 0.0f );  // X axis
++      setCubeLoation(modelCube[3], 0.0f, dist, 0.0f );  // Y axis
++      setCubeLoation(modelCube[4], 0.0f, 2 * dist, 0.0f );  // Y axis
++      setCubeLoation(modelCube[5], 0.0f, 0.0f, dist ); // Z axis
++      setCubeLoation(modelCube[6], 0.0f, 0.0f, 2 * dist );
++      setCubeLoation(modelCube[7], 0.0f, 0.0f, 3 * dist );
++      setCubeLoation(modelCube[8], 0.0f, 0.0f, 4 * dist );
++
++      numOfCubes = 9 + circuit.GetNumberOfBricks();
++
++/*
++      setCubeLoation(modelCube[9], 0.0f, dist, 0.0f);
++      setCubeLoation(modelCube[10], 0.0f, 2 * dist, 0.0f);
++      setCubeLoation(modelCube[11], 0.0f, 0.0f, 0.0f);
++      setCubeLoation(modelCube[12], 0.0f, -dist, 0.0f);
++      setCubeLoation(modelCube[13], 0.0f, -2 * dist, 0.0f);
++
++      setCubeLoation(modelCube[14], 0.0f, dist, dist);
++      setCubeLoation(modelCube[15], 0.0f, 2 * dist, dist);
++      setCubeLoation(modelCube[16], 0.0f, 0.0f, dist);
++      setCubeLoation(modelCube[17], 0.0f, -dist, dist);
++      setCubeLoation(modelCube[18], 0.0f, -2 * dist, dist);
++
++      setCubeLoation(modelCube[19], 0.0f, dist, 2 * dist);
++      setCubeLoation(modelCube[20], 0.0f, 2 * dist, 2 * dist);
++      setCubeLoation(modelCube[21], 0.0f, 0.0f, 2 * dist);
++      setCubeLoation(modelCube[22], 0.0f, -dist, 2 * dist);
++      setCubeLoation(modelCube[23], 0.0f, -2 * dist, 2 * dist);
++
++      setCubeLoation(modelCube[24], 0.0f, dist, -dist);
++      setCubeLoation(modelCube[25], 0.0f, 2 * dist, -dist);
++      setCubeLoation(modelCube[26], 0.0f, 0.0f, -dist);
++      setCubeLoation(modelCube[27], 0.0f, -dist, -dist);
++      setCubeLoation(modelCube[28], 0.0f, -2 * dist, -dist);
++
++      setCubeLoation(modelCube[29], 0.0f, dist, -2 * dist);
++      setCubeLoation(modelCube[30], 0.0f, 2 * dist, -2 * dist);
++      setCubeLoation(modelCube[31], 0.0f, 0.0f, -2 * dist);
++      setCubeLoation(modelCube[32], 0.0f, -dist, -2 * dist);
++      setCubeLoation(modelCube[33], 0.0f, -2 * dist, -2 * dist);
++      for (int i = 9; i < 34; i++)
++      {
++        Matrix.rotateM(modelCube[i], 0, 90, 0, 1, 0);
++        Matrix.translateM(modelCube[i], 0, 30, 0, 30);
++      }
++*/
++
++      setCubeLoation(modelSpaceShip[0], 0.0f, -dist, -dist ); // Z axis
++      setCubeLoation(modelSpaceShip[1], 0.0f, -dist, -2 * dist ); // Z axis
++      setCubeLoation(modelSpaceShip[2], 0.0f, -dist, dist ); // Z axis
++      setCubeLoation(modelSpaceShip[3], 0.0f, -dist, 2 * dist ); // Z axis
++      setCubeLoation(modelSpaceShip[4], 0.0f, -dist, 3 * dist ); // Z axis
++      Matrix.scaleM(modelSpaceShip[0], 0, shrink, shrink, shrink);
++      Matrix.scaleM(modelSpaceShip[1], 0, shrink, shrink, shrink);
++      Matrix.scaleM(modelSpaceShip[2], 0, shrink, shrink, shrink);
++      Matrix.scaleM(modelSpaceShip[3], 0, shrink, shrink, shrink);
++      Matrix.scaleM(modelSpaceShip[4], 0, shrink, shrink, shrink);
++
++
++      // Update the sound location to match it with the new cube position.
++      if (sourceId != GvrAudioEngine.INVALID_ID) {
++        gvrAudioEngine.setSoundObjectPosition(
++                sourceId, modelPosition[0], modelPosition[1], modelPosition[2]);
++      }
++      checkGLError("updateCubePosition");
++
+     }
+-    checkGLError("updateCubePosition");
++    catch(Exception ex)
++    {
++      ex.printStackTrace();
++
++    }
++
++
+   }
+ 
+   /**
+@@ -407,6 +672,170 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+     return null;
+   }
+ 
++  @Override
++  public boolean dispatchGenericMotionEvent(MotionEvent event) {
++
++
++    // Check that the event came from a joystick or gamepad since a generic
++    // motion event could be almost anything. API level 18 adds the useful
++    // event.isFromSource() helper function.
++    boolean rt = false;
++    int eventSource = event.getSource();
++    if (  ((eventSource & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
++          ((eventSource & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK) )
++    {
++      if (event.getAction() == android.view.MotionEvent.ACTION_MOVE  )
++      {
++        int id = event.getDeviceId();
++        if (-1 != id) {
++
++          float X = event.getX();
++
++          float Y = event.getY();
++
++          if (X == 0 && Y == 1) {
++            // yaw right
++            EulerYvelocity = EulerYvelocity +1;
++            logToTheScreen("yaw right");
++            rt = true;
++
++          } else if (X == 0 && Y == -1) {
++            // yaw left
++            EulerYvelocity = EulerYvelocity -1;
++            logToTheScreen("yaw left");
++
++            rt = true;
++          } else if (X == 1 && Y == 0) {
++            // pitch up
++            EulerXvelocity = EulerXvelocity -1;
++            logToTheScreen("pitch up");
++
++            rt = true;
++          } else if (X == -1 && Y == 0) {
++            // pitch down
++            EulerXvelocity = EulerXvelocity +1;
++            logToTheScreen("pitch down");
++
++            rt = true;
++          } else if (X == -1 && Y == -1) {
++            // yaw and pich -1
++            EulerXvelocity = EulerXvelocity +1;
++            EulerYvelocity = EulerYvelocity +1;
++            logToTheScreen("pitch down yaw left");
++
++            rt = true;
++          } else if (X == 1 && Y == 1) {
++            // yaw and pitch +1
++            EulerXvelocity = EulerXvelocity -1;
++            EulerYvelocity = EulerYvelocity -1;
++            logToTheScreen("pitch up yaw right");
++
++
++            rt = true;
++          } else {
++            rt = true;
++            EulerXvelocity = 0;
++            EulerYvelocity = 0;
++
++          }
++        }
++
++      }
++    }
++    else
++    {
++      overlayView.show3DToast("dispatchGenericMotionEvent()\n2\nsuper.onGenericMotionEvent(event) ");
++      rt = super.onGenericMotionEvent(event);
++    }
++
++    return rt;
++  }
++
++
++  @Override
++  public boolean dispatchKeyEvent (KeyEvent event) {
++    boolean rt = false;
++
++    /*
++              Joystick buttons
++
++           u           D
++                       |
++        j          B---+---A
++           @           |
++                       C
++     */
++
++    if ((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD)
++    {
++      if (event.getRepeatCount() == 0)
++      {
++
++        if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_B) {
++          // *****  Buttot "A" on joystick
++          //walk = walk - 5.0f;
++          updateModelPosition();
++          logToTheScreen("Create Wall");
++          rt = true;
++        } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_X) {
++          // *****  Buttot "B" on joystick
++//          logToTheScreen("B-B Nothing");
++          //R0 = R0 +5;
++          //updateModelPosition(walk, R0, R1, R2);
++          //logToTheScreen("R0");
++          rt = true;
++        } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_Y) {
++          // *****  Button "D" on joystick
++          velocitySpaceship++;
++          logToTheScreen("B-D Faster");
++          //R1 = R1 + 5;
++          //updateModelPosition(walk, R0, R1, R2);
++          //logToTheScreen("R1");
++          rt = true;
++        } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_A) {
++          // *****  Button "C" on joystick
++          velocitySpaceship = 0;
++          logToTheScreen("B-C Stop");
++          //R2 = R2 + 5;
++          //updateModelPosition(walk, R0, R1, R2);
++          //logToTheScreen("R2");
++
++          rt = true;
++        } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_R1) {
++          // *****  Top Button on joystick
++          logToTheScreen("B-Top Nothing");
++          rt = true;
++        } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_L1) {
++          // *****  Bottom Button on joystick
++          // Go back to the starting position and set velocity to zero
++          xPosition = 20.0f;
++          yPosition = 0.0f;
++          zPosition = 20.0f;
++          velocitySpaceship = 0;
++          //walk = R0 = R1= R2 = 0.0f;
++          EulerXvelocity = EulerYvelocity = EulerY = EulerX = 0;
++
++          logToTheScreen("B-bottom Reset");
++          rt = true;
++        } else {
++          rt = true;
++        }
++      }
++      else
++      {
++        rt = true;
++      }
++    }
++    else
++    {
++      rt = super.dispatchKeyEvent(event);
++
++    }
++    return rt;
++  }
++
++
++
+   /**
+    * Prepares OpenGL ES before we draw a frame.
+    *
+@@ -417,10 +846,61 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+     setCubeRotation();
+ 
+     // Build the camera matrix and apply it to the ModelView.
+-    Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
++    //Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
++
++    Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, 0.0f,
++            0.0f, 0.0f, CAMERA_Z,
++            0.0f, 1.0f, 0.0f);
++
++
++    Matrix.setIdentityM(copym, 0);
++    Matrix.setRotateEulerM(copym, 0, 90, 0, 0);
++
++    Matrix.setIdentityM(copym, 0);
++    Matrix.setRotateEulerM(copym, 0, 0, 90, 0);
++
++    Matrix.setIdentityM(copym, 0);
++    Matrix.setRotateEulerM(copym, 0, 0, 0, 90);
++
++
++    EulerY = EulerY + EulerYvelocity;
++    EulerX = EulerX + EulerXvelocity;
++
++    headTransform.getForwardVector(forwardVector, 0);
++    headTransform.getEulerAngles(headEuler,0);
++
++    Matrix.setIdentityM(headViewx, 0);
++    headTransform.getHeadView(headViewx, 0);
++    forwardVector[1] = -headViewx[6];
++    forwardVector[0] =  headViewx[2];
++
++    velocityX = forwardVector[0];
++    velocityY = -forwardVector[1];
++    velocityZ = -forwardVector[2];
+ 
+     headTransform.getHeadView(headView, 0);
+ 
++    Matrix.setIdentityM(rotateTmp, 0);
++    Matrix.rotateM(rotateTmp,0,-EulerY, 0.0f, 1.0f, 0.0f);
++    Matrix.rotateM(rotateTmp,0,-EulerX, 1.0f, 0.0f, 0.0f);
++    Matrix.multiplyMV(outputVelocityVector, 0, rotateTmp, 0, inputVelocityVector, 0);
++
++    if (velocitySpaceship > 0)
++    {
++
++      //xPosition = xPosition + velocitySpaceship * (velocityX/100.0f);
++      //yPosition = yPosition + velocitySpaceship * (velocityY/100.0f);
++      //zPosition = zPosition + velocitySpaceship * (velocityZ/100.0f);
++
++      xPosition = xPosition + (outputVelocityVector[0] * velocitySpaceship /100.0f);
++      yPosition = yPosition + (outputVelocityVector[1] * velocitySpaceship /100.0f);
++      zPosition = zPosition + (outputVelocityVector[2] * velocitySpaceship /100.0f);
++    }
++
++    LIGHT_POS_IN_WORLD_SPACE[0] = xPosition + LIGHT_POS_IN_WORLD_SPACE_ORIGINAL[0];
++    LIGHT_POS_IN_WORLD_SPACE[1] = yPosition + LIGHT_POS_IN_WORLD_SPACE_ORIGINAL[1];
++    LIGHT_POS_IN_WORLD_SPACE[2] = yPosition + LIGHT_POS_IN_WORLD_SPACE_ORIGINAL[2];
++
+     // Update the 3d audio engine with the most recent head rotation.
+     headTransform.getQuaternion(headRotation, 0);
+     gvrAudioEngine.setHeadRotation(
+@@ -432,7 +912,12 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+   }
+ 
+   protected void setCubeRotation() {
+-    Matrix.rotateM(modelCube, 0, TIME_DELTA, 0.5f, 0.5f, 1.0f);
++
++    for (int i=0; i<numOfCubes; i++)
++    {
++      Matrix.rotateM(modelCube[i], 0, TIME_DELTA, 0.5f, 0.5f, 1.0f);
++
++    }
+   }
+ 
+   /**
+@@ -447,25 +932,69 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+ 
+     checkGLError("colorParam");
+ 
++    /*  Draw spaceship **************************************************/
+     // Apply the eye transformation to the camera.
+     Matrix.multiplyMM(view, 0, eye.getEyeView(), 0, camera, 0);
+ 
+     // Set the position of the light
+     Matrix.multiplyMV(lightPosInEyeSpace, 0, view, 0, LIGHT_POS_IN_WORLD_SPACE, 0);
+ 
++    float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
++    for (int i=0; i<numOfCubesInSpaceShip; i++)
++    {
++      Matrix.multiplyMM(modelView, 0, view, 0, modelSpaceShip[i], 0);
++      Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
++      drawCube(eye.getType() == Eye.Type.LEFT);
++    }
++
++
++    /*  end Draw spaceship ***********************************************/
++
++    Matrix.setIdentityM(cameraTranslat, 0);
++    Matrix.translateM(cameraTranslat, 0, xPosition, yPosition, zPosition);
++
++    Matrix.setIdentityM(copym, 0);
++    Matrix.setIdentityM(rotateTmp, 0);
++
++
++    Matrix.rotateM(copym, 0, eye.getEyeView(), 0, EulerX, 1, 0, 0);
++    Matrix.rotateM(rotateTmp, 0, copym, 0, EulerY, 0, 1, 0);
++
++    Matrix.setIdentityM(copym, 0);
++
++
++    // Apply the eye transformation to the camera.
++    Matrix.multiplyMM(copym, 0, cameraTranslat, 0, camera, 0);
++    //Matrix.multiplyMM(view, 0, eye.getEyeView(), 0, copym, 0);
++    Matrix.multiplyMM(view, 0, rotateTmp, 0, copym, 0);
++
++    Matrix.setIdentityM(copym, 0);
++    //Matrix.multiplyMM(view, 0, eye.getEyeView(), 0, camera, 0);
++
++    // Set the position of the light
++    Matrix.multiplyMV(lightPosInEyeSpace, 0, view, 0, LIGHT_POS_IN_WORLD_SPACE, 0);
++
++
++
+     // Build the ModelView and ModelViewProjection matrices
+     // for calculating cube position and light.
+-    float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
+-    Matrix.multiplyMM(modelView, 0, view, 0, modelCube, 0);
+-    Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
+-    drawCube();
++    perspective = eye.getPerspective(Z_NEAR, Z_FAR);
++    for (int i=0; i<numOfCubes; i++)
++    {
++      Matrix.multiplyMM(modelView, 0, view, 0, modelCube[i], 0);
++      Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
++      drawCube(eye.getType() == Eye.Type.LEFT);
++
++    }
+ 
+     // Set modelView for the floor, so we draw floor in the correct location
+     Matrix.multiplyMM(modelView, 0, view, 0, modelFloor, 0);
+     Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
+     drawFloor();
++
+   }
+ 
++
+   @Override
+   public void onFinishFrame(Viewport viewport) {}
+ 
+@@ -474,33 +1003,50 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+    *
+    * <p>We've set all of our transformation matrices. Now we simply pass them into the shader.
+    */
+-  public void drawCube() {
++  public void drawCube(boolean leftEye ) {
+     GLES20.glUseProgram(cubeProgram);
+ 
++    // Set the active texture unit to texture unit 0.
++    GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
++
++    // Bind the texture to this unit.
++    if (leftEye)
++      GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandleL);
++    else
++      GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandleR);
++
++    GLES20.glUniform1i(cubeTextureUniformParam, 0);
++
++
+     GLES20.glUniform3fv(cubeLightPosParam, 1, lightPosInEyeSpace, 0);
+ 
+     // Set the Model in the shader, used to calculate lighting
+-    GLES20.glUniformMatrix4fv(cubeModelParam, 1, false, modelCube, 0);
++    //GLES20.glUniformMatrix4fv(cubeModelParam, 1, false, modelCube, 0);
+ 
+     // Set the ModelView in the shader, used to calculate lighting
+     GLES20.glUniformMatrix4fv(cubeModelViewParam, 1, false, modelView, 0);
+ 
+     // Set the position of the cube
+-    GLES20.glVertexAttribPointer(
+-        cubePositionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, cubeVertices);
++    GLES20.glVertexAttribPointer(cubePositionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, cubeVertices);
+ 
+     // Set the ModelViewProjection matrix in the shader.
+     GLES20.glUniformMatrix4fv(cubeModelViewProjectionParam, 1, false, modelViewProjection, 0);
+ 
+     // Set the normal positions of the cube, again for shading
+     GLES20.glVertexAttribPointer(cubeNormalParam, 3, GLES20.GL_FLOAT, false, 0, cubeNormals);
+-    GLES20.glVertexAttribPointer(cubeColorParam, 4, GLES20.GL_FLOAT, false, 0,
+-        isLookingAtObject() ? cubeFoundColors : cubeColors);
++    GLES20.glVertexAttribPointer(cubeColorParam, 4, GLES20.GL_FLOAT, false, 0, cubeColors);
++
++    // Pass in the texture coordinate information
++    // Stewart
++    CubeTextureCoordinateData.position(0);
++    GLES20.glVertexAttribPointer(CubeTextureCoordinateDataParam, 2, GLES20.GL_FLOAT, false, 0, CubeTextureCoordinateData);
++
+ 
+     // Enable vertex arrays
+     GLES20.glEnableVertexAttribArray(cubePositionParam);
+     GLES20.glEnableVertexAttribArray(cubeNormalParam);
+     GLES20.glEnableVertexAttribArray(cubeColorParam);
++    GLES20.glEnableVertexAttribArray(CubeTextureCoordinateDataParam);
+ 
+     GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
+ 
+@@ -508,10 +1054,13 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+     GLES20.glDisableVertexAttribArray(cubePositionParam);
+     GLES20.glDisableVertexAttribArray(cubeNormalParam);
+     GLES20.glDisableVertexAttribArray(cubeColorParam);
+-    
++    GLES20.glDisableVertexAttribArray(CubeTextureCoordinateDataParam);
++
+     checkGLError("Drawing cube");
+   }
+ 
++
++
+   /**
+    * Draw the floor.
+    *
+@@ -527,8 +1076,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+     GLES20.glUniformMatrix4fv(floorModelParam, 1, false, modelFloor, 0);
+     GLES20.glUniformMatrix4fv(floorModelViewParam, 1, false, modelView, 0);
+     GLES20.glUniformMatrix4fv(floorModelViewProjectionParam, 1, false, modelViewProjection, 0);
+-    GLES20.glVertexAttribPointer(
+-        floorPositionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, floorVertices);
++    GLES20.glVertexAttribPointer(floorPositionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, floorVertices);
+     GLES20.glVertexAttribPointer(floorNormalParam, 3, GLES20.GL_FLOAT, false, 0, floorNormals);
+     GLES20.glVertexAttribPointer(floorColorParam, 4, GLES20.GL_FLOAT, false, 0, floorColors);
+ 
+@@ -552,12 +1100,6 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+   public void onCardboardTrigger() {
+     Log.i(TAG, "onCardboardTrigger");
+ 
+-    if (isLookingAtObject()) {
+-      successSourceId = gvrAudioEngine.createStereoSound(SUCCESS_SOUND_FILE);
+-      gvrAudioEngine.playSound(successSourceId, false /* looping disabled */);
+-      hideObject();
+-    }
+-
+     // Always give user feedback.
+     vibrator.vibrate(50);
+   }
+@@ -567,6 +1109,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+    *
+    * <p>We'll rotate it around the Y-axis so it's out of sight, and then up or down by a little bit.
+    */
++  /*
+   protected void hideObject() {
+     float[] rotationMatrix = new float[16];
+     float[] posVec = new float[4];
+@@ -592,12 +1135,13 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+ 
+     updateModelPosition();
+   }
+-
++*/
+   /**
+    * Check if user is looking at object by calculating where the object is in eye-space.
+    *
+    * @return true if the user is looking at the object.
+    */
++  /*
+   private boolean isLookingAtObject() {
+     // Convert object space to camera space. Use the headView from onNewFrame.
+     Matrix.multiplyMM(modelView, 0, headView, 0, modelCube, 0);
+@@ -608,4 +1152,5 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
+ 
+     return Math.abs(pitch) < PITCH_LIMIT && Math.abs(yaw) < YAW_LIMIT;
+   }
++  */
+ }
+diff --git a/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/VrOverlayView.java b/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/VrOverlayView.java
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/WorldLayoutData.java b/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/WorldLayoutData.java
+old mode 100644
+new mode 100755
+index 1a14e9e..1ea65d6
+--- a/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/WorldLayoutData.java
++++ b/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/WorldLayoutData.java
+@@ -70,7 +70,7 @@ public final class WorldLayoutData {
+       -1.0f, -1.0f, 1.0f,
+       -1.0f, -1.0f, -1.0f,
+   };
+-
++/*
+   public static final float[] CUBE_COLORS = new float[] {
+       // front, green
+       0f, 0.5273f, 0.2656f, 1.0f,
+@@ -120,6 +120,56 @@ public final class WorldLayoutData {
+       0.8359375f,  0.17578125f,  0.125f, 1.0f,
+       0.8359375f,  0.17578125f,  0.125f, 1.0f,
+   };
++*/
++  public static final float[] CUBE_COLORS = new float[] {
++        // Front face (red)
++        1.0f, 0.0f, 0.0f, 1.0f,
++        1.0f, 0.0f, 0.0f, 1.0f,
++        1.0f, 0.0f, 0.0f, 1.0f,
++        1.0f, 0.0f, 0.0f, 1.0f,
++        1.0f, 0.0f, 0.0f, 1.0f,
++        1.0f, 0.0f, 0.0f, 1.0f,
++
++        // Right face (green)
++        0.0f, 1.0f, 0.0f, 1.0f,
++        0.0f, 1.0f, 0.0f, 1.0f,
++        0.0f, 1.0f, 0.0f, 1.0f,
++        0.0f, 1.0f, 0.0f, 1.0f,
++        0.0f, 1.0f, 0.0f, 1.0f,
++        0.0f, 1.0f, 0.0f, 1.0f,
++
++        // Back face (blue)
++        0.0f, 0.0f, 1.0f, 1.0f,
++        0.0f, 0.0f, 1.0f, 1.0f,
++        0.0f, 0.0f, 1.0f, 1.0f,
++        0.0f, 0.0f, 1.0f, 1.0f,
++        0.0f, 0.0f, 1.0f, 1.0f,
++        0.0f, 0.0f, 1.0f, 1.0f,
++
++        // Left face (yellow)
++        1.0f, 1.0f, 0.0f, 1.0f,
++        1.0f, 1.0f, 0.0f, 1.0f,
++        1.0f, 1.0f, 0.0f, 1.0f,
++        1.0f, 1.0f, 0.0f, 1.0f,
++        1.0f, 1.0f, 0.0f, 1.0f,
++        1.0f, 1.0f, 0.0f, 1.0f,
++
++        // Top face (cyan)
++        0.0f, 1.0f, 1.0f, 1.0f,
++        0.0f, 1.0f, 1.0f, 1.0f,
++        0.0f, 1.0f, 1.0f, 1.0f,
++        0.0f, 1.0f, 1.0f, 1.0f,
++        0.0f, 1.0f, 1.0f, 1.0f,
++        0.0f, 1.0f, 1.0f, 1.0f,
++
++        // Bottom face (magenta)
++        1.0f, 0.0f, 1.0f, 1.0f,
++        1.0f, 0.0f, 1.0f, 1.0f,
++        1.0f, 0.0f, 1.0f, 1.0f,
++        1.0f, 0.0f, 1.0f, 1.0f,
++        1.0f, 0.0f, 1.0f, 1.0f,
++        1.0f, 0.0f, 1.0f, 1.0f
++};
+ 
+   public static final float[] CUBE_FOUND_COLORS = new float[] {
+       // front, yellow
+@@ -310,4 +360,55 @@ public final class WorldLayoutData {
+       0.0f, 0.3398f, 0.9023f, 1.0f,
+       0.0f, 0.3398f, 0.9023f, 1.0f,
+   };
++
++  public static final float[] cubeTextureCoordinateData = new float[] {
++          // Front face
++          0.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 1.0f,
++          1.0f, 0.0f,
++
++          // Right face
++          0.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 1.0f,
++          1.0f, 0.0f,
++
++          // Back face
++          0.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 1.0f,
++          1.0f, 0.0f,
++
++          // Left face
++          0.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 1.0f,
++          1.0f, 0.0f,
++
++          // Top face
++          0.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 1.0f,
++          1.0f, 0.0f,
++
++          // Bottom face
++          0.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 0.0f,
++          0.0f, 1.0f,
++          1.0f, 1.0f,
++          1.0f, 0.0f
++
++  };
+ }
+diff --git a/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/Circuit.java b/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/Circuit.java
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/RawResourceReader.java b/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/RawResourceReader.java
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/ShaderHelper.java b/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/ShaderHelper.java
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/TextureHelper.java b/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/TextureHelper.java
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/Transform.java b/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/Transform.java
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/Wall.java b/samples/sdk-treasurehunt/src/main/java/com/google/vr/sdk/samples/treasurehunt/common/Wall.java
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/res/drawable-nodpi/bumpy_bricks_public_domain_l.jpg b/samples/sdk-treasurehunt/src/main/res/drawable-nodpi/bumpy_bricks_public_domain_l.jpg
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/res/drawable-nodpi/bumpy_bricks_public_domain_r.jpg b/samples/sdk-treasurehunt/src/main/res/drawable-nodpi/bumpy_bricks_public_domain_r.jpg
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/res/drawable-nodpi/vr_icon.png b/samples/sdk-treasurehunt/src/main/res/drawable-nodpi/vr_icon.png
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/res/drawable-nodpi/vr_icon_background.png b/samples/sdk-treasurehunt/src/main/res/drawable-nodpi/vr_icon_background.png
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/res/layout/common_ui.xml b/samples/sdk-treasurehunt/src/main/res/layout/common_ui.xml
+old mode 100644
+new mode 100755
+index 741209c..1430ed3
+--- a/samples/sdk-treasurehunt/src/main/res/layout/common_ui.xml
++++ b/samples/sdk-treasurehunt/src/main/res/layout/common_ui.xml
+@@ -13,4 +13,11 @@
+         android:layout_alignParentTop="true"
+         android:layout_alignParentLeft="true" />
+ 
++    <com.google.vr.sdk.samples.treasurehunt.VrOverlayView
++        android:id="@+id/overlay"
++        android:layout_width="fill_parent"
++        android:layout_height="fill_parent"
++        android:layout_alignParentLeft="true"
++        android:layout_alignParentTop="true" />
++
+ </RelativeLayout>
+diff --git a/samples/sdk-treasurehunt/src/main/res/raw/grid_fragment.shader b/samples/sdk-treasurehunt/src/main/res/raw/grid_fragment.shader
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/res/raw/light_vertex.shader b/samples/sdk-treasurehunt/src/main/res/raw/light_vertex.shader
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/res/raw/passthrough_fragment.shader b/samples/sdk-treasurehunt/src/main/res/raw/passthrough_fragment.shader
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/res/raw/per_pixel_fragment_shader.glsl b/samples/sdk-treasurehunt/src/main/res/raw/per_pixel_fragment_shader.glsl
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/res/raw/per_pixel_vertex_shader.glsl b/samples/sdk-treasurehunt/src/main/res/raw/per_pixel_vertex_shader.glsl
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-treasurehunt/src/main/res/values/strings.xml b/samples/sdk-treasurehunt/src/main/res/values/strings.xml
+old mode 100644
+new mode 100755
+diff --git a/samples/sdk-videoplayer/build.gradle b/samples/sdk-videoplayer/build.gradle
+deleted file mode 100644
+index 69b7e01..0000000
+--- a/samples/sdk-videoplayer/build.gradle
++++ /dev/null
+@@ -1,44 +0,0 @@
+-/*
+- * Copyright 2015 Google Inc. All rights reserved.
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-apply plugin: 'com.android.model.application'
+-
+-model {
+-    android {
+-        compileSdkVersion 24
+-        buildToolsVersion "24.0.0"
+-
+-        defaultConfig {
+-            minSdkVersion.apiLevel 19
+-            targetSdkVersion.apiLevel 24
+-            versionCode 1
+-            versionName "1.0"
+-        }
+-
+-        buildTypes {
+-            release {
+-                minifyEnabled true
+-                proguardFiles.add(file('../../proguard-gvr.txt'))
+-            }
+-        }
+-    }
+-}
+-
+-dependencies {
+-    compile 'com.google.android.exoplayer:exoplayer:r1.5.10'
+-
+-    compile 'com.google.vr:sdk-base:1.10.0'
+-    compile 'com.google.vr:sdk-common:1.10.0'
+-}
+diff --git a/settings.gradle b/settings.gradle
+old mode 100644
+new mode 100755
+index 5362f86..78a814f
+--- a/settings.gradle
++++ b/settings.gradle
+@@ -2,7 +2,7 @@
+ // building them.
+ 
+ // Explicitly load all the SDK samples using their full path.
+-include ':samples:sdk-controllerclient'
++include ':samples:sdk-controllerclient', ':com.pogo.wiener.dog'
+ include ':samples:sdk-simplepanowidget'
+ include ':samples:sdk-simplevideowidget'
+ include ':samples:sdk-treasurehunt'
