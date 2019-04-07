@@ -1,0 +1,26 @@
+@startuml
+
+title __ENGINE's onNewFrame Sequence Diagram__\n
+
+'Android
+'onNewFrame
+'TreasureHuntActivity
+'Engine
+'SystemManager
+'MoveNode
+'PositionComponent
+'VelocityComponent
+
+participant "Android"
+
+"Android" -> "TreasureHuntActivity": "onNewFrame()"
+"TreasureHuntActivity" -> "Engine": "GetSystemManager()"
+"Engine" -> "SystemManager": "update(float time)"
+"SystemManager" -> "MoveSystem": "update(float time)"
+"MoveSystem" -> "MoveNode": "update(float time)"
+"MoveNode" -> "PositionComponent": "getPostion()"
+"MoveNode" -> "VelocityComponent": "getVelocity()"
+"MoveNode" -> "MoveNode": "calculateNewPostion()"
+"MoveNode" -> "PositionComponent": "Translate(x,y,z)"
+
+@enduml

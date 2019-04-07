@@ -4,7 +4,15 @@ import com.google.vr.sdk.samples.treasurehunt.TexturedMesh;
 
 import java.util.List;
 import java.util.ArrayList;
+/*
 
+ * @startuml
+
+ * class Eninge
+
+ * @enduml
+
+ */
 
 public class Engine
 {
@@ -40,6 +48,7 @@ public class Engine
 
   public void addALLSystems()
   {
+    systemManager.addSystem(new GrowSystem());
     systemManager.addSystem(new MoveSystem());
     renderSystem = new RenderSystem();
     systemManager.addSystem(renderSystem);

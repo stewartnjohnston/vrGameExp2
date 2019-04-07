@@ -1,0 +1,309 @@
+@startuml
+
+title __SAMPLES-SDK-TREASUREHUNT's Class Diagram__\n
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class AndroidVRGraphicsDispay {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class BuildConfig {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class BuildConfig {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    package com.google.vr.sdk.samples.treasurehunt.common {
+      class Circuit {
+      }
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class DisplayComponent {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class Engine {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class Entity {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    abstract class GraphicsDisplay {
+    }
+  }
+  
+
+  package net.stewart.gradleTutorial {
+    class Main {
+    }
+  }
+  
+
+  package net.pogo.game.common {
+    class Matrix {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class MoveNode {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class MoveSystem {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class Node {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class PositionComponent {
+    }
+  }
+  
+
+  package com.google.vr.sdk.base {
+    class R {
+    }
+  }
+  
+
+  package com.google.vr.cardboard {
+    class R {
+    }
+  }
+  
+
+  package com.google.vr.sdk.base {
+    class R {
+    }
+  }
+  
+
+  package com.google.vr.sdk.audio {
+    class R {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class R {
+    }
+  }
+  
+
+  package com.google.vr.cardboard {
+    class R {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class R {
+    }
+  }
+  
+
+  package com.google.vr.sdk.audio {
+    class R {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    package com.google.vr.sdk.samples.treasurehunt.common {
+      class RawResourceReader {
+      }
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class RenderNode {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class RenderSystem {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    package com.google.vr.sdk.samples.treasurehunt.common {
+      class ShaderHelper {
+      }
+    }
+  }
+  
+
+  package net.pogo.game.samples.simplegame {
+    class Simple {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    abstract class System {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class SystemManager {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class Texture {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class TextureContainer {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    package com.google.vr.sdk.samples.treasurehunt.common {
+      class TextureHelper {
+      }
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class TexturedMesh {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class TexturedMeshContainer {
+    }
+  }
+  
+
+  package net.pogo.game.common {
+    class Transform {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    package com.google.vr.sdk.samples.treasurehunt.common {
+      class Transform {
+      }
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class TreasureHuntActivity {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class Util {
+    }
+  }
+  
+
+  package net.pogo.game.common {
+    class Vector3 {
+    }
+  }
+  
+
+  package net.pogo.game.engine {
+    class VelocityComponent {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class VrOverlayView {
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    package com.google.vr.sdk.samples.treasurehunt.common {
+      class Wall {
+      }
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class WorldLayoutData {
+    }
+  }
+  
+
+  AndroidVRGraphicsDispay -up-|> GraphicsDisplay
+  AndroidVRGraphicsDispay o-- RenderNode : node
+  Engine o-- SystemManager : systemManager
+  Engine o-- TextureContainer : textureContainer
+  Engine o-- TexturedMeshContainer : texturedMeshContainer
+  Engine o-- RenderSystem : renderSystem
+  GraphicsDisplay o-- TextureContainer : textureContainer
+  GraphicsDisplay o-- TexturedMeshContainer : texturedMeshContainer
+  MoveNode -up-|> Node
+  MoveNode o-- PositionComponent : position
+  MoveNode o-- VelocityComponent : velocity
+  MoveSystem -up-|> System
+  PositionComponent o-- Transform : position
+  RenderNode o-- DisplayComponent : display
+  RenderNode o-- PositionComponent : position
+  RenderSystem -up-|> System
+  RenderSystem o-- GraphicsDisplay : display
+  TreasureHuntActivity -up-|> StereoRenderer
+  TreasureHuntActivity -up-|> GvrActivity
+  TreasureHuntActivity o-- TexturedMesh : room
+  TreasureHuntActivity o-- Texture : roomTex
+  VelocityComponent o-- Vector3 : velocity
+  VrOverlayView -up-|> LinearLayout
+  VrOverlayView o-- CardboardOverlayEyeView : leftView
+  VrOverlayView o-- CardboardOverlayEyeView : rightView
+
+
+right footer
+
+
+PlantUML diagram generated by SketchIt! (https://bitbucket.org/pmesmeur/sketch.it)
+For more information about this tool, please contact philippe.mesmeur@gmail.com
+endfooter
+
+@enduml

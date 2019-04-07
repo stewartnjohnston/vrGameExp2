@@ -1,5 +1,15 @@
 package net.pogo.game.engine;
 
+/*
+
+ * @startuml
+
+ * class System
+
+ * @enduml
+
+ */
+
 abstract class System
 {
   private boolean running;

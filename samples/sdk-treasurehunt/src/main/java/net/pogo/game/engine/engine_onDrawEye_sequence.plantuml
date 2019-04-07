@@ -1,0 +1,39 @@
+@startuml
+
+title __ENGINE's onDrawEye Sequence Diagram__\n
+
+'Android
+'onNewFrame
+'TreasureHuntActivity
+'Engine
+'SystemManager
+'MoveNode
+'PositionComponent
+'VelocityComponent
+
+participant "Android"
+
+"Android" -> "TreasureHuntActivity": "onDrawEye()"
+"TreasureHuntActivity" -> "Engine": "GetRenderSystem()"
+"TreasureHuntActivity" -> "RenderSystem": "renderSystem.set(view) transform"
+"TreasureHuntActivity" -> "RenderSystem": "renderSystem.set(perspective) transform"
+"TreasureHuntActivity" -> "RenderSystem": "renderSystem.draw()"
+
+"RenderSystem" -> "RenderNode": "target.getNodeData()"
+"RenderSystem" -> "AndroidVRGraphicsDispay": "display.draw(view, perspective, RenderNodeData)"
+"AndroidVRGraphicsDispay" -> "RenderNode": "target.getPosition()"
+"RenderNode" -> "PositionComponent": "getPosition()"
+"AndroidVRGraphicsDispay" -> "AndroidVRGraphicsDispay": "set modelTarget = position"
+"AndroidVRGraphicsDispay" -> "AndroidVRGraphicsDispay": "transform modelTarget position by view and perspective"
+"AndroidVRGraphicsDispay" -> "AndroidVRGraphicsDispay": "Matrix.multiplyMM(modelView, view, modelTarget, 0)"
+"AndroidVRGraphicsDispay" -> "AndroidVRGraphicsDispay": "Matrix.multiplyMM(modelViewProjection, perspective, modelView)"
+"AndroidVRGraphicsDispay" -> "AndroidVRGraphicsDispay": "drawTarget()"
+
+"AndroidVRGraphicsDispay" -> "DisplayComponent": "targetObjectMeshes = Get textureMeshObject"
+"AndroidVRGraphicsDispay" -> "DisplayComponent": "sterioTextures = Get textureObject"
+
+"AndroidVRGraphicsDispay" -> "Texture": "sterioTextures.Texture()"
+"AndroidVRGraphicsDispay" -> "TexturedMesh": "targetObjectMeshes.draw()"
+
+
+@enduml

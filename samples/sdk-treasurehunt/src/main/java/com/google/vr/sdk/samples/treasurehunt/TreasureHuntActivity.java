@@ -39,12 +39,16 @@ import net.pogo.game.engine.DisplayComponent;
 import net.pogo.game.engine.Engine;
 import net.pogo.game.engine.Entity;
 import net.pogo.game.engine.PositionComponent;
+import net.pogo.game.engine.ScaleComponent;
 import net.pogo.game.engine.VelocityComponent;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import javax.microedition.khronos.egl.EGLConfig;
+
+import com.google.vr.sdk.samples.treasurehunt.common.Circuit;
 
 /**
  * A Google VR sample application.
@@ -73,6 +77,9 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
   float[] cameraRotate = new float[16];
   float[] copym = new float[16];
   float[] rotateTmp = new float[16];
+  protected float[][] modelCube;
+
+  private List<Entity> circuitWallEntityList = new ArrayList<Entity>();
 
   private  static float[] forwardVector = new float[3];
   private static  float[] headViewx = new float[16];
@@ -96,10 +103,19 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
   private static final String TAG = "HelloVrActivity";
 
+  private static final String CubeRoom_obj ="CubeRoom.obj";
+  //private static final String cube_obj = "arrow.obj";
+  private static final String cube_obj = "cube.obj";
+  private static final String CubeRoom_BakedDiffuse_png = "CubeRoom_BakedDiffuse.png";
+  private static final String bumpy_bricks_public_domain_l_png = "bumpy_bricks_public_domain_l.png";
+  private static final String bumpy_bricks_public_domain_r_png = "bumpy_bricks_public_domain_r.png";
+  private static final String arrow_obj ="arrow.obj";
+
+
   private static final int TARGET_MESH_COUNT = 3;
 
   private static final float Z_NEAR = 0.01f;
-  private static final float Z_FAR = 10.0f;
+  private static final float Z_FAR = 200.0f;
 
   // Convenience vector for extracting the position from a matrix via multiplication.
   private static final float[] POS_MATRIX_MULTIPLY_VEC = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -180,52 +196,67 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
   private volatile int sourceId = GvrAudioEngine.INVALID_ID;
   private volatile int successSourceId = GvrAudioEngine.INVALID_ID;
 
-    public void createSpaceship(int _objectPositionParam, int _objectUvParam, float x, float y, float z,float vx, float vy, float vz) throws IOException
+  public Entity createSpaceship(int _objectPositionParam, int _objectUvParam, float x, float y, float z,float vx, float vy, float vz) throws IOException {
+
+      return createSpaceship(_objectPositionParam, _objectUvParam,  x,  y,  z, vx,  vy,  vz,  false);
+
+    }
+
+    public Entity createSpaceship(int _objectPositionParam, int _objectUvParam, float x, float y, float z,float vx, float vy, float vz, boolean changeScale) throws IOException
     {
         Entity spaceship = new Entity();
+
+        if(changeScale)
+        {
+          ScaleComponent scale = new ScaleComponent();
+          //scale.randomCalculateBonds(2.0f, 0.3f, 0.001f, 0.0001f);
+          scale.calculateBonds(2.0f, 0.3f, 0.007f, 0.0001f);
+          spaceship.add( scale );
+        }
+
 
         PositionComponent position = new PositionComponent();
         position.position.SetUnity();
 
-        position.position.Translate(0.0f, 0.0f, targetDistance);
         position.position.Translate(x,y,z);
 
         spaceship.add( position );
 
         DisplayComponent displayComponent = new DisplayComponent();
 
-        displayComponent.textureMesh = new String("cube.obj");
-        if(!engine.GetTexturedMeshContainer().containsKey("cube.obj"))
+        displayComponent.textureMesh = new String(cube_obj);
+        if(!engine.GetTexturedMeshContainer().containsKey(cube_obj))
         {
-            TexturedMesh texturedMesh =  new TexturedMesh(this, "cube.obj", _objectPositionParam, _objectUvParam);
+            TexturedMesh texturedMesh =  new TexturedMesh(this, cube_obj, _objectPositionParam, _objectUvParam);
             displayComponent.textureMeshObject = texturedMesh;
-            engine.GetTexturedMeshContainer().loadWaveFrontObject("cube.obj", texturedMesh);
+            engine.GetTexturedMeshContainer().loadWaveFrontObject(cube_obj, texturedMesh);
         }
         else
         {
-            displayComponent.textureMeshObject = engine.GetTexturedMeshContainer().getTexturedMesh("cube.obj");
+            displayComponent.textureMeshObject = engine.GetTexturedMeshContainer().getTexturedMesh(cube_obj);
         }
 
-        if(!engine.GetTextureContainer().containsKey("bumpy_bricks_public_domain_l.png")) {
-          Texture texture = new Texture(this, "bumpy_bricks_public_domain_l.png");
-          displayComponent.textureObject = texture;
-          engine.GetTextureContainer().loadTexture("bumpy_bricks_public_domain_l.png", texture);
+        if(!engine.GetTextureContainer().containsKey(bumpy_bricks_public_domain_l_png)) {
+          Texture texture = new Texture(this, bumpy_bricks_public_domain_l_png);
+          displayComponent.textureObject_l = texture;
+          engine.GetTextureContainer().loadTexture(bumpy_bricks_public_domain_l_png, texture);
         }
         else
         {
-          displayComponent.textureObject = engine.GetTextureContainer().getTexture("bumpy_bricks_public_domain_l.png");
+          displayComponent.textureObject_l = engine.GetTextureContainer().getTexture(bumpy_bricks_public_domain_l_png);
         }
 
-        if(!engine.GetTextureContainer().containsKey("bumpy_bricks_public_domain_r.png")) {
-          Texture texture = new Texture(this, "bumpy_bricks_public_domain_r.png");
-          engine.GetTextureContainer().loadTexture("bumpy_bricks_public_domain_r.png", texture);
+        if(!engine.GetTextureContainer().containsKey(bumpy_bricks_public_domain_r_png)) {
+          Texture texture = new Texture(this, bumpy_bricks_public_domain_r_png);
+          displayComponent.textureObject_r = texture;
+          engine.GetTextureContainer().loadTexture(bumpy_bricks_public_domain_r_png, texture);
         }
         else
         {
-          displayComponent.textureObject = engine.GetTextureContainer().getTexture("bumpy_bricks_public_domain_r.png");
+          displayComponent.textureObject_r = engine.GetTextureContainer().getTexture(bumpy_bricks_public_domain_r_png);
         }
 
-        displayComponent.texture = new String("bumpy_bricks_public_domain_r.png");
+        displayComponent.texture = new String(bumpy_bricks_public_domain_r_png);
 
         spaceship.add( displayComponent );
 
@@ -238,7 +269,62 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         spaceship.add( velocity );
 
         engine.addEntity( spaceship );
+        return spaceship;
     }
+
+  public void createCockPit(int _objectPositionParam, int _objectUvParam, float x, float y, float z) throws IOException
+  {
+    Entity cockPit = new Entity();
+
+    PositionComponent position = new PositionComponent();
+    position.position.SetUnity();
+
+    position.position.Translate(x,y,z);
+
+    cockPit.add( position );
+
+    DisplayComponent displayComponent = new DisplayComponent();
+
+
+
+      displayComponent.textureMesh = new String(arrow_obj);
+    if(!engine.GetTexturedMeshContainer().containsKey(arrow_obj))
+    {
+      TexturedMesh texturedMesh =  new TexturedMesh(this, arrow_obj, _objectPositionParam, _objectUvParam);
+      displayComponent.textureMeshObject = texturedMesh;
+      engine.GetTexturedMeshContainer().loadWaveFrontObject(arrow_obj, texturedMesh);
+    }
+    else
+    {
+      displayComponent.textureMeshObject = engine.GetTexturedMeshContainer().getTexturedMesh(arrow_obj);
+    }
+
+    if(!engine.GetTextureContainer().containsKey(bumpy_bricks_public_domain_l_png)) {
+      Texture texture = new Texture(this, bumpy_bricks_public_domain_l_png);
+      displayComponent.textureObject_l = texture;
+      engine.GetTextureContainer().loadTexture(bumpy_bricks_public_domain_l_png, texture);
+    }
+    else
+    {
+      displayComponent.textureObject_l = engine.GetTextureContainer().getTexture(bumpy_bricks_public_domain_l_png);
+    }
+
+    if(!engine.GetTextureContainer().containsKey(bumpy_bricks_public_domain_r_png)) {
+      Texture texture = new Texture(this, bumpy_bricks_public_domain_r_png);
+      displayComponent.textureObject_r = texture;
+      engine.GetTextureContainer().loadTexture(bumpy_bricks_public_domain_r_png, texture);
+    }
+    else
+    {
+      displayComponent.textureObject_r = engine.GetTextureContainer().getTexture(bumpy_bricks_public_domain_r_png);
+    }
+
+    displayComponent.texture = new String(bumpy_bricks_public_domain_r_png);
+
+    cockPit.add( displayComponent );
+
+    engine.GetrenderSystem().addCockpitEntity( cockPit );
+  }
   /**
    * Sets the view to our GvrView and initializes the transformation matrices we will use
    * to render our scene.
@@ -301,7 +387,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
   @Override
   public void onResume() {
     super.onResume();
-    gvrAudioEngine.resume();
+    //gvrAudioEngine.resume();
   }
 
   @Override
@@ -314,6 +400,39 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     Log.i(TAG, "onSurfaceChanged");
   }
 
+  /**
+   * Creates a circuit of walls for the game
+   */
+  public void createCiruitWal() {
+    try {
+      Circuit circuit = new Circuit();
+      modelCube = circuit.GetTransforms(0);
+      int numOfCubes = circuit.GetNumberOfBricks();
+
+      for (int i=0; i<numOfCubes; i++)
+      {
+        float x = modelCube[i][12];
+        float y = modelCube[i][13];
+        float z = modelCube[i][14];
+        Entity entity = createSpaceship(objectPositionParam, objectUvParam, x, y, z, 0, 0, 0, true);
+        circuitWallEntityList.add(entity);
+
+      }
+     } catch (IOException e) {
+      Log.e(TAG, "Unable to createCiruitWal()", e);
+     }
+  }
+
+  /**
+   * Creates a circuit of walls for the game
+   */
+  public void deleteCiruitWall() {
+    for (Entity entity : circuitWallEntityList)
+    {
+      engine.removeEntity(entity);
+    }
+    circuitWallEntityList.clear();
+  }
   /**
    * Creates the buffers we use to store information about the 3D world.
    *
@@ -370,27 +489,69 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
     try {
 
-      createSpaceship(objectPositionParam, objectUvParam, 0, 0, targetDistance, 0, 0, 0);
-      createSpaceship(objectPositionParam, objectUvParam, 0, 0, 2.5f, 0, 0, 0);
-      createSpaceship(objectPositionParam, objectUvParam, 2.0f, 2.0f, 2.5f, 0, 0, 0.01f);
-      createSpaceship(objectPositionParam, objectUvParam, 1.0f, 1.0f, 2.5f, 0, 0.01f, 0);
-      createSpaceship(objectPositionParam, objectUvParam, 3.0f, 0.0f, 2.5f, 0.01f, 0, 0);
+        float dist = 3.0f;
+
+        createCiruitWal();
+
+/*        Circuit circuit = new Circuit();
+
+        modelCube = circuit.GetTransforms(0);
+        int numOfCubes = circuit.GetNumberOfBricks();
+
+        for (int i=0; i<numOfCubes; i++)
+        {
+            float x = modelCube[i][12];
+            float y = modelCube[i][13];
+            float z = modelCube[i][14];
+            createSpaceship(objectPositionParam, objectUvParam, x, y, z, 0, 0, 0);
+        }*/
+
+        createSpaceship(objectPositionParam, objectUvParam, 0.0f, 0.0f, 0.0f, 0, 0, 0);  //Center
+        createSpaceship(objectPositionParam, objectUvParam, dist, 0.0f, 0.0f , 0, 0, 0);  // X axis
+        createSpaceship(objectPositionParam, objectUvParam, 6 * dist, 0.0f, 0.0f , 0, 0, 0);  // X axis
+        createSpaceship(objectPositionParam, objectUvParam, 0.0f, dist, 0.0f , 0, 0, 0);  // Y axis
+        createSpaceship(objectPositionParam, objectUvParam, 0.0f, 2 * dist, 0.0f , 0, 0, 0);  // Y axis
+        createSpaceship(objectPositionParam, objectUvParam, 0.0f, 0.0f, dist , 0, 0, 0); // Z axis
+        createSpaceship(objectPositionParam, objectUvParam, 0.0f, 0.0f, 2 * dist , 0, 0, 0);
+        createSpaceship(objectPositionParam, objectUvParam, 0.0f, 0.0f, 3 * dist , 0, 0, 0);
+        createSpaceship(objectPositionParam, objectUvParam, 0.0f, 0.0f, 4 * dist , 0, 0, 0);
 
 
-      room = new TexturedMesh(this, "CubeRoom.obj", objectPositionParam, objectUvParam);
-      roomTex = new Texture(this, "CubeRoom_BakedDiffuse.png");
+
+
+        createCockPit(objectPositionParam, objectUvParam, 0.0f, -dist, -dist);
+        createCockPit(objectPositionParam, objectUvParam, 0.0f, -dist, -2 * dist);
+        createCockPit(objectPositionParam, objectUvParam, 0.0f, -dist, dist);
+        createCockPit(objectPositionParam, objectUvParam, 0.0f, -dist, 2 * dist);
+        createCockPit(objectPositionParam, objectUvParam, 0.0f, -dist, 3 * dist);
+
+/*
+        createSpaceship(objectPositionParam, objectUvParam, 0, 0, 0, 0, 0, 0);
+        createSpaceship(objectPositionParam, objectUvParam, 1.0f, 0, 0, 0, 0, 0);
+        createSpaceship(objectPositionParam, objectUvParam, 2.0f, 0, 0, 0, 0, 0);
+        createSpaceship(objectPositionParam, objectUvParam, 3.0f, 0, 0, 0, 0, 0);
+        createSpaceship(objectPositionParam, objectUvParam, 4.0f, 0, 0, 0, 0, 0);
+
+        createSpaceship(objectPositionParam, objectUvParam, 0, 0, targetDistance, 0, 0, 0);
+        createSpaceship(objectPositionParam, objectUvParam, 0, 0, 2.5f, 0, 0, 0);
+        createSpaceship(objectPositionParam, objectUvParam, 2.0f, 2.0f, 2.5f, 0, 0, 0.0001f);
+        createSpaceship(objectPositionParam, objectUvParam, 1.0f, 1.0f, 2.5f, 0, 0.0001f, 0);
+        createSpaceship(objectPositionParam, objectUvParam, 3.0f, 0.0f, 2.5f, 0.0001f, 0, 0);
+*/
+      room = new TexturedMesh(this, CubeRoom_obj, objectPositionParam, objectUvParam);
+      roomTex = new Texture(this, CubeRoom_BakedDiffuse_png);
       targetObjectMeshes = new ArrayList<>();
       targetObjectNotSelectedTextures = new ArrayList<>();
       targetObjectSelectedTextures = new ArrayList<>();
       sterioTextures = new ArrayList<>();
 
-      sterioTextures.add(new Texture(this, "bumpy_bricks_public_domain_l.png"));
-      sterioTextures.add(new Texture(this, "bumpy_bricks_public_domain_r.png"));
+      sterioTextures.add(new Texture(this, bumpy_bricks_public_domain_l_png));
+      sterioTextures.add(new Texture(this, bumpy_bricks_public_domain_r_png));
 
 
-      targetObjectMeshes.add(new TexturedMesh(this, "cube.obj", objectPositionParam, objectUvParam));
-      targetObjectMeshes.add(new TexturedMesh(this, "cube.obj", objectPositionParam, objectUvParam));
-      targetObjectMeshes.add(new TexturedMesh(this, "cube.obj", objectPositionParam, objectUvParam));
+      targetObjectMeshes.add(new TexturedMesh(this, cube_obj, objectPositionParam, objectUvParam));
+      targetObjectMeshes.add(new TexturedMesh(this, cube_obj, objectPositionParam, objectUvParam));
+      targetObjectMeshes.add(new TexturedMesh(this, cube_obj, objectPositionParam, objectUvParam));
 
 
 
@@ -523,6 +684,13 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 //        j          B---+---A
 //           @           |
 //                       C
+//              Joystick buttons
+//
+//           u           A
+//                       |
+//  joystick         C---+---D
+//           @           |
+//                       B
 
 
     if ((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD)
@@ -562,6 +730,8 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_R1) {
           // *****  Top Button on joystick
           Log.i(TAG, "dispatchKeyEvent()  B-Top Nothing");
+          deleteCiruitWall();
+          createCiruitWal();
           rt = true;
         } else if (event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_BUTTON_L1) {
           // *****  Bottom Button on joystick
@@ -575,6 +745,9 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
           Log.i(TAG, "dispatchKeyEvent()  B-bottom Reset");
           rt = true;
+          // turn ofF the audio
+          gvrAudioEngine.pause();
+          deleteCiruitWall();
         } else {
           rt = true;
         }
@@ -677,6 +850,19 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     // improve performance.
     GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
+    /*  Draw cockpit **************************************************/
+    // Apply the eye transformation to the camera.
+    Matrix.multiplyMM(view, 0, eye.getEyeView(), 0, camera, 0);
+    float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
+
+    engine.GetrenderSystem().view = view;
+    engine.GetrenderSystem().perspective = perspective;
+
+    engine.GetrenderSystem().drawCockpit();
+
+
+    /*  end Draw cockpit ***********************************************/
+
     //-------------------------------------------------------------------------------------------------
     Matrix.setIdentityM(cameraTranslat, 0);
     Matrix.translateM(cameraTranslat, 0, xPosition, yPosition, zPosition);
@@ -708,17 +894,29 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
     // Build the ModelView and ModelViewProjection matrices
     // for calculating the position of the target object.
-    float[] perspective = eye.getPerspective(Z_NEAR, Z_FAR);
+    perspective = eye.getPerspective(Z_NEAR, Z_FAR);
 
     engine.GetrenderSystem().view = view;
     engine.GetrenderSystem().perspective = perspective;
 
+    if(eye.getType() == Eye.Type.LEFT)
+    {
+      perspective[3] = 1.0f;
+    }
+    else
+    {
+      perspective[3] = 2.0f;
+    }
+
+    engine.GetrenderSystem().perspective = perspective;
     engine.GetrenderSystem().draw();
 
+    perspective[3] = 0.0f;
+/*
     Matrix.multiplyMM(modelView, 0, view, 0, modelTarget, 0);
     Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
     drawTarget(eye.getType() == Eye.Type.LEFT);
-
+*/
 /*
     // Set modelView for the room, so it's drawn in the correct location
     Matrix.multiplyMM(modelView, 0, view, 0, modelRoom, 0);

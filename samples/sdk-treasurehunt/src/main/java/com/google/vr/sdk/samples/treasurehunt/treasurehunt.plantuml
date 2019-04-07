@@ -1,0 +1,221 @@
+@startuml
+
+title __TREASUREHUNT's Class Diagram__\n
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class AndroidVRGraphicsDispay {
+        ~ objectProgram : int
+        ~ objectModelViewProjectionParam : int
+        ~ modelViewProjection : float[]
+        ~ modelView : float[]
+        + draw()
+        + drawTarget()
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class Texture {
+        - textureId : int[]
+        + Texture()
+        + bind()
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class TexturedMesh {
+        {static} - TAG : String
+        - vertices : FloatBuffer
+        - uv : FloatBuffer
+        - indices : ShortBuffer
+        - positionAttrib : int
+        - uvAttrib : int
+        + TexturedMesh()
+        + draw()
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class TreasureHuntActivity {
+        {static} ~ engine : Engine
+        ~ EulerXvelocity : float
+        ~ EulerYvelocity : float
+        ~ EulerX : float
+        ~ EulerY : float
+        {static} - velocitySpaceship : float
+        {static} - xPosition : float
+        {static} - yPosition : float
+        {static} - zPosition : float
+        ~ headEuler : float[]
+        ~ cameraTranslat : float[]
+        ~ cameraRotate : float[]
+        ~ copym : float[]
+        ~ rotateTmp : float[]
+        {static} - forwardVector : float[]
+        {static} - headViewx : float[]
+        {static} - actors : float[][]
+        {static} - inputVelocityVector : float[]
+        {static} - outputVelocityVector : float[]
+        {static} - CAMERA_Z : float
+        {static} - velocityX : float
+        {static} - velocityY : float
+        {static} - velocityZ : float
+        {static} - LIGHT_POS_IN_WORLD_SPACE : float[]
+        {static} - LIGHT_POS_IN_WORLD_SPACE_ORIGINAL : float[]
+        {static} - TAG : String
+        {static} - TARGET_MESH_COUNT : int
+        {static} - Z_NEAR : float
+        {static} - Z_FAR : float
+        {static} - POS_MATRIX_MULTIPLY_VEC : float[]
+        {static} - FORWARD_VEC : float[]
+        {static} - MIN_TARGET_DISTANCE : float
+        {static} - MAX_TARGET_DISTANCE : float
+        {static} - OBJECT_SOUND_FILE : String
+        {static} - SUCCESS_SOUND_FILE : String
+        {static} - FLOOR_HEIGHT : float
+        {static} - ANGLE_LIMIT : float
+        {static} - MAX_YAW : float
+        {static} - MAX_PITCH : float
+        {static} - OBJECT_VERTEX_SHADER_CODE : String[]
+        {static} - OBJECT_FRAGMENT_SHADER_CODE : String[]
+        - objectProgram : int
+        - objectPositionParam : int
+        - objectUvParam : int
+        - objectModelViewProjectionParam : int
+        - targetDistance : float
+        - targetObjectMeshes : ArrayList<TexturedMesh>
+        - targetObjectNotSelectedTextures : ArrayList<Texture>
+        - targetObjectSelectedTextures : ArrayList<Texture>
+        - sterioTextures : ArrayList<Texture>
+        - curTargetObject : int
+        - random : Random
+        - targetPosition : float[]
+        - camera : float[]
+        - view : float[]
+        - headView : float[]
+        - modelViewProjection : float[]
+        - modelView : float[]
+        - modelTarget : float[]
+        - modelRoom : float[]
+        - tempPosition : float[]
+        - headRotation : float[]
+        - gvrAudioEngine : GvrAudioEngine
+        - sourceId : int
+        - successSourceId : int
+        + createSpaceship()
+        + onCreate()
+        + initializeGvrView()
+        + onPause()
+        + onResume()
+        + onRendererShutdown()
+        + onSurfaceChanged()
+        + onSurfaceCreated()
+        - updateTargetPosition()
+        + dispatchGenericMotionEvent()
+        + dispatchKeyEvent()
+        + onNewFrame()
+        + onDrawEye()
+        + onFinishFrame()
+        + drawTarget()
+        + drawRoom()
+        + onCardboardTrigger()
+        - hideTarget()
+        - isLookingAtTarget()
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class Util {
+        {static} - TAG : String
+        {static} - HALT_ON_GL_ERROR : boolean
+        - Util()
+        {static} + checkGlError()
+        {static} + compileProgram()
+        {static} + angleBetweenVectors()
+        {static} - dotProduct()
+        {static} - vectorNorm()
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class VrOverlayView {
+        - textFadeAnimation : AlphaAnimation
+        + VrOverlayView()
+        + show3DToast()
+        - setDepthOffset()
+        - setText()
+        - setTextAlpha()
+        - setColor()
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    abstract class EndAnimationListener {
+        + onAnimationRepeat()
+        + onAnimationStart()
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class CardboardOverlayEyeView {
+        - imageView : ImageView
+        - textView : TextView
+        - offset : float
+        + CardboardOverlayEyeView()
+        + setColor()
+        + setText()
+        + setTextViewAlpha()
+        + setOffset()
+        # onLayout()
+    }
+  }
+  
+
+  package com.google.vr.sdk.samples.treasurehunt {
+    class WorldLayoutData {
+        {static} + CUBE_COORDS : float[]
+        {static} + CUBE_COLORS : float[]
+        {static} + CUBE_FOUND_COLORS : float[]
+        {static} + CUBE_NORMALS : float[]
+        {static} + FLOOR_COORDS : float[]
+        {static} + FLOOR_NORMALS : float[]
+        {static} + FLOOR_COLORS : float[]
+        {static} + cubeTextureCoordinateData : float[]
+    }
+  }
+  
+
+  AndroidVRGraphicsDispay -up-|> GraphicsDisplay
+  AndroidVRGraphicsDispay o-- RenderNode : node
+  TreasureHuntActivity -up-|> StereoRenderer
+  TreasureHuntActivity -up-|> GvrActivity
+  TreasureHuntActivity o-- TexturedMesh : room
+  TreasureHuntActivity o-- Texture : roomTex
+  VrOverlayView -up-|> LinearLayout
+  VrOverlayView o-- CardboardOverlayEyeView : leftView
+  VrOverlayView o-- CardboardOverlayEyeView : rightView
+  VrOverlayView +-down- EndAnimationListener
+  VrOverlayView +-down- CardboardOverlayEyeView
+  EndAnimationListener -up-|> AnimationListener
+  CardboardOverlayEyeView -up-|> ViewGroup
+  MarginLayoutParams -up-|> LayoutParams
+  BaseSavedState -up-|> AbsSavedState
+  LayoutParams -up-|> MarginLayoutParams
+  MarginLayoutParams -up-|> LayoutParams
+  BaseSavedState -up-|> AbsSavedState
+
+
+right footer
+
+
+PlantUML diagram generated by SketchIt! (https://bitbucket.org/pmesmeur/sketch.it)
+For more information about this tool, please contact philippe.mesmeur@gmail.com
+endfooter
+
+@enduml
